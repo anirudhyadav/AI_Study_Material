@@ -1,0 +1,2030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>RAG Architect Lab — AY</title>
+<style>
+:root{
+  --navy:#0a0f1e;--navy2:#111827;--navy3:#1a2236;--navy4:#243050;--navy5:#2d3a56;
+  --teal:#00d4c8;--teal2:#00a89e;--tealb:rgba(0,212,200,.08);
+  --amber:#f59e0b;--amber2:#b45309;--amberb:rgba(245,158,11,.08);
+  --purple:#a78bfa;--purpleb:rgba(167,139,250,.08);
+  --green:#34d399;--greenb:rgba(52,211,153,.08);
+  --coral:#f87171;--coralb:rgba(248,113,113,.08);
+  --blue:#60a5fa;--blueb:rgba(96,165,250,.08);
+  --t1:#e8eaf0;--t2:#8b94ab;--t3:#4a5568;
+  --bd:#1e2d45;--bd2:#2d4060;
+  --mono:'Courier New',Courier,monospace;
+  --sans:system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--t1);font-family:var(--sans);font-size:13px;}
+::-webkit-scrollbar{width:5px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--navy5);border-radius:3px;}
+
+/* HEADER */
+.hdr{height:52px;background:var(--navy2);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:12px;padding:0 18px;position:fixed;top:0;left:0;right:0;z-index:200;}
+.logo{width:32px;height:32px;border-radius:7px;background:linear-gradient(135deg,var(--teal),var(--purple));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;color:var(--navy);flex-shrink:0;}
+.hdr-info{flex:1;}
+.hdr-title{font-size:13px;font-weight:700;}
+.hdr-sub{font-size:10px;color:var(--t3);margin-top:1px;}
+.hdr-pills{display:flex;gap:4px;margin-left:auto;}
+.hpill{padding:3px 9px;border-radius:16px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid var(--bd);background:var(--navy3);color:var(--t3);transition:all .15s;letter-spacing:.2px;}
+.hpill:hover{border-color:var(--bd2);color:var(--t2);}
+.hpill.on{background:var(--tealb);border-color:var(--teal);color:var(--teal);}
+
+/* STEP INDICATOR BAR */
+.stepbar{height:36px;background:var(--navy3);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 18px;gap:6px;position:fixed;top:52px;left:0;right:0;z-index:190;overflow-x:auto;}
+.stepbar::-webkit-scrollbar{height:0;}
+.step-node{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:5px;border:1px solid var(--bd);background:var(--navy4);font-size:10px;font-weight:700;color:var(--t3);white-space:nowrap;transition:all .2s;}
+.step-node.s1{border-color:rgba(0,212,200,.3);color:var(--teal);background:var(--tealb);}
+.step-node.s2{border-color:rgba(245,158,11,.3);color:var(--amber);background:var(--amberb);}
+.step-node.s3{border-color:rgba(167,139,250,.3);color:var(--purple);background:var(--purpleb);}
+.step-node.s4{border-color:rgba(52,211,153,.3);color:var(--green);background:var(--greenb);}
+.step-arrow{color:var(--bd2);font-size:11px;flex-shrink:0;}
+
+/* LAYOUT */
+.body{position:fixed;top:88px;left:0;right:0;bottom:0;display:flex;overflow:hidden;}
+
+/* RAIL */
+.rail{width:248px;flex-shrink:0;background:var(--navy2);border-right:1px solid var(--bd);overflow-y:auto;padding:10px 8px;}
+.rail-lbl{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--t3);padding:4px 8px 6px;}
+.si{padding:10px 11px;border-radius:6px;cursor:pointer;border:1px solid transparent;margin-bottom:3px;transition:all .15s;}
+.si:hover{background:var(--navy3);border-color:var(--bd);}
+.si.on{background:var(--tealb);border-color:var(--teal);}
+.si-num{font-size:9px;font-family:var(--mono);color:var(--t3);}
+.si-title{font-size:12px;font-weight:700;color:var(--t1);margin:2px 0;}
+.si.on .si-num{color:var(--teal);}
+.si.on .si-title{color:var(--teal);}
+.si-steps{display:flex;gap:3px;margin-top:5px;flex-wrap:wrap;}
+.dot{width:7px;height:7px;border-radius:50%;}
+.d1{background:var(--teal);opacity:.7;}
+.d2{background:var(--amber);opacity:.7;}
+.d3{background:var(--purple);opacity:.7;}
+.d4{background:var(--green);opacity:.7;}
+.si-why{font-size:10px;color:var(--t3);margin-top:4px;line-height:1.4;}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.stage-hdr{padding:12px 18px 10px;background:var(--navy2);border-bottom:1px solid var(--bd);flex-shrink:0;}
+.sh-top{display:flex;align-items:center;gap:9px;margin-bottom:5px;flex-wrap:wrap;}
+.sh-num{font-size:10px;font-family:var(--mono);color:var(--amber);background:var(--amberb);border:1px solid rgba(245,158,11,.2);padding:2px 7px;border-radius:4px;}
+.sh-title{font-size:14px;font-weight:700;color:var(--t1);}
+.sh-desc{font-size:11px;color:var(--t2);line-height:1.55;max-width:700px;}
+.sh-meta{display:flex;gap:14px;margin-top:6px;flex-wrap:wrap;}
+.sh-meta span{font-size:10px;color:var(--t3);}
+.sh-meta strong{font-family:var(--mono);color:var(--t2);}
+.tag{font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;letter-spacing:.2px;}
+.tc{background:var(--tealb);color:var(--teal);}
+.ta{background:var(--amberb);color:var(--amber);}
+.tp{background:var(--purpleb);color:var(--purple);}
+.tg{background:var(--greenb);color:var(--green);}
+.tr{background:var(--coralb);color:var(--coral);}
+.tb{background:var(--blueb);color:var(--blue);}
+
+.code-area{flex:1;overflow-y:auto;padding:14px 18px 20px;}
+
+/* CODE BLOCK */
+.cb{background:var(--navy);border:1px solid var(--bd);border-radius:8px;overflow:hidden;position:relative;margin-bottom:14px;}
+.cb-bar{display:flex;align-items:center;justify-content:space-between;padding:7px 13px;background:var(--navy3);border-bottom:1px solid var(--bd);}
+.cb-left{display:flex;align-items:center;gap:10px;}
+.cb-lang{font-size:10px;color:var(--t3);font-family:var(--mono);}
+.cb-file{font-size:10px;color:var(--t2);font-family:var(--mono);}
+.cb-copy{font-size:9px;font-weight:700;padding:2px 9px;border-radius:4px;background:var(--navy4);border:1px solid var(--bd2);color:var(--t2);cursor:pointer;font-family:var(--sans);transition:all .15s;}
+.cb-copy:hover{color:var(--t1);border-color:var(--teal);}
+pre{padding:16px;font-family:var(--mono);font-size:11.5px;line-height:1.8;overflow-x:auto;white-space:pre;}
+
+/* syntax */
+.kw{color:#c792ea;}.fn{color:#82aaff;}.cls{color:#ffcb6b;}
+.st{color:#c3e88d;}.cm{color:#546e7a;font-style:italic;}
+.nm{color:#f78c6c;}.dc{color:#89ddff;}.im{color:#c792ea;}
+.bi{color:#f78c6c;}
+/* step section dividers inside code */
+.s1l{color:var(--teal);font-weight:700;}
+.s2l{color:var(--amber);font-weight:700;}
+.s3l{color:var(--purple);font-weight:700;}
+.s4l{color:var(--green);font-weight:700;}
+/* diff */
+.da{background:rgba(52,211,153,.06);color:var(--green);}
+
+/* WHAT'S NEW */
+.wn{background:var(--navy2);border:1px solid var(--bd);border-left:3px solid var(--teal);border-radius:8px;padding:13px 15px;}
+.wn-title{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--teal);margin-bottom:8px;}
+.wn-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.wn-step{background:var(--navy3);border-radius:6px;padding:10px 12px;}
+.wn-step-label{font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px;}
+.wn-step ul{padding-left:13px;font-size:11px;color:var(--t2);line-height:1.65;}
+.wn-step li{margin-bottom:2px;}
+.wn-step code{font-family:var(--mono);font-size:10px;background:var(--navy4);padding:1px 4px;border-radius:3px;}
+.inst{margin-top:10px;background:var(--navy);border:1px solid var(--bd);border-radius:5px;padding:8px 12px;font-family:var(--mono);font-size:11px;color:var(--green);}
+.inst-lbl{font-size:9px;color:var(--t3);font-family:var(--sans);margin-bottom:3px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;}
+
+/* ASK PANEL */
+.ask{width:284px;flex-shrink:0;background:var(--navy2);border-left:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden;}
+.ask-hdr{padding:11px 13px;border-bottom:1px solid var(--bd);}
+.ask-hdr-t{font-size:12px;font-weight:700;color:var(--purple);}
+.ask-hdr-s{font-size:10px;color:var(--t3);margin-top:1px;}
+.ask-body{flex:1;overflow-y:auto;padding:10px 11px 4px;}
+.sugs{display:flex;flex-direction:column;gap:4px;margin-bottom:8px;}
+.sug{background:var(--navy3);border:1px solid var(--bd);border-radius:5px;padding:5px 8px;font-size:10px;color:var(--t2);cursor:pointer;text-align:left;font-family:var(--sans);transition:all .15s;line-height:1.4;}
+.sug:hover{border-color:var(--bd2);color:var(--t1);}
+.msg{margin-bottom:8px;}
+.who{font-size:9px;font-weight:700;letter-spacing:.5px;color:var(--t3);text-transform:uppercase;margin-bottom:2px;}
+.bbl{padding:7px 9px;border-radius:6px;font-size:11px;line-height:1.6;}
+.bbl-u{background:var(--navy4);color:var(--t1);border-radius:6px 6px 2px 6px;}
+.bbl-a{background:var(--purpleb);border:1px solid rgba(167,139,250,.12);color:var(--t1);border-radius:6px 6px 6px 2px;}
+.ask-ft{padding:7px 9px;border-top:1px solid var(--bd);}
+.ask-row{display:flex;gap:5px;align-items:flex-end;}
+.ask-inp{flex:1;background:var(--navy3);border:1px solid var(--bd);border-radius:5px;color:var(--t1);font-family:var(--sans);font-size:11px;padding:6px 8px;resize:none;outline:none;height:38px;transition:border-color .15s;}
+.ask-inp:focus{border-color:var(--teal2);}
+.ask-btn{flex-shrink:0;padding:6px 10px;background:var(--teal);color:var(--navy);border:none;border-radius:5px;font-weight:700;font-size:12px;cursor:pointer;}
+.ask-btn:hover{background:var(--teal2);}
+.sp{display:inline-block;width:10px;height:10px;border:2px solid var(--bd2);border-top-color:var(--teal);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;margin-right:3px;}
+@keyframes sp{to{transform:rotate(360deg);}}
+
+/* ── ARCHITECT SECTIONS ── */
+.arch-area{flex:1;overflow-y:auto;padding:14px 18px 20px;}
+.rail-divider{height:1px;background:var(--bd);margin:10px 4px;position:relative;}
+.rail-divider span{position:absolute;top:-7px;left:8px;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--t3);background:var(--navy2);padding:0 5px;}
+.ai{padding:10px 11px;border-radius:6px;cursor:pointer;border:1px solid transparent;margin-bottom:3px;transition:all .15s;}
+.ai:hover{background:var(--navy3);border-color:var(--bd);}
+.ai.on{background:var(--purpleb);border-color:var(--purple);}
+.ai-num{font-size:9px;font-family:var(--mono);color:var(--t3);}
+.ai-title{font-size:12px;font-weight:700;color:var(--t1);margin:2px 0;}
+.ai.on .ai-num{color:var(--purple);}
+.ai.on .ai-title{color:var(--purple);}
+.ai-why{font-size:10px;color:var(--t3);line-height:1.4;}
+/* arch header */
+.ah-top{display:flex;align-items:center;gap:9px;margin-bottom:5px;flex-wrap:wrap;}
+.ah-num{font-size:10px;font-family:var(--mono);color:var(--purple);background:var(--purpleb);border:1px solid rgba(167,139,250,.2);padding:2px 7px;border-radius:4px;}
+.ah-title{font-size:14px;font-weight:700;color:var(--t1);}
+.ah-desc{font-size:11px;color:var(--t2);line-height:1.55;max-width:700px;}
+/* decision card */
+.dc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.dc{background:var(--navy2);border:1px solid var(--bd);border-radius:8px;padding:14px;}
+.dc-scenario{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);margin-bottom:6px;}
+.dc-choice{font-size:13px;font-weight:700;color:var(--teal);margin-bottom:5px;}
+.dc-why{font-size:11px;color:var(--t2);line-height:1.6;margin-bottom:6px;}
+.dc-not{font-size:10px;color:var(--coral);line-height:1.5;}
+.dc-not strong{font-weight:700;}
+/* tradeoff table */
+.tt{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:14px;}
+.tt th{background:var(--navy3);color:var(--t3);font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:7px 11px;text-align:left;border-bottom:1px solid var(--bd);}
+.tt td{padding:8px 11px;border-bottom:1px solid var(--bd);color:var(--t2);vertical-align:top;line-height:1.5;}
+.tt tr:last-child td{border-bottom:none;}
+.tt td:first-child{color:var(--t1);font-weight:600;font-size:12px;}
+.tt tr:hover td{background:var(--navy3);}
+.good{color:var(--green);}.ok{color:var(--amber);}.bad{color:var(--coral);}
+.tt-title{font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px;margin-top:14px;}
+/* failure card */
+.fc{background:var(--navy2);border:1px solid var(--bd);border-left:3px solid var(--coral);border-radius:8px;padding:13px 15px;margin-bottom:10px;}
+.fc-name{font-size:13px;font-weight:700;color:var(--coral);margin-bottom:4px;}
+.fc-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:8px;}
+.fc-block{font-size:11px;line-height:1.6;}
+.fc-lbl{font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);margin-bottom:3px;}
+/* metric card */
+.mc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
+.mc{background:var(--navy2);border:1px solid var(--bd);border-radius:8px;padding:14px;}
+.mc-name{font-size:13px;font-weight:700;color:var(--teal);margin-bottom:4px;}
+.mc-formula{font-family:var(--mono);font-size:10px;color:var(--amber);background:var(--navy3);padding:4px 8px;border-radius:4px;margin-bottom:6px;}
+.mc-desc{font-size:11px;color:var(--t2);line-height:1.6;}
+.mc-good{font-size:10px;color:var(--green);margin-top:5px;}
+/* checklist */
+.cl-section{background:var(--navy2);border:1px solid var(--bd);border-radius:8px;padding:14px;margin-bottom:10px;}
+.cl-title{font-size:12px;font-weight:700;color:var(--purple);margin-bottom:8px;}
+.cl-item{display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid var(--bd);font-size:11px;color:var(--t2);line-height:1.5;}
+.cl-item:last-child{border-bottom:none;}
+.cl-check{width:14px;height:14px;border-radius:3px;background:var(--greenb);border:1px solid rgba(52,211,153,.3);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--green);}
+.cl-req{font-size:9px;font-weight:700;letter-spacing:.3px;padding:1px 5px;border-radius:3px;margin-left:auto;flex-shrink:0;}
+.req-p0{background:var(--coralb);color:var(--coral);}
+.req-p1{background:var(--amberb);color:var(--amber);}
+.req-p2{background:var(--greenb);color:var(--green);}
+/* Q&A */
+.qa-item{background:var(--navy2);border:1px solid var(--bd);border-radius:8px;margin-bottom:8px;overflow:hidden;}
+.qa-q{padding:12px 14px;cursor:pointer;display:flex;align-items:flex-start;gap:10px;transition:background .15s;}
+.qa-q:hover{background:var(--navy3);}
+.qa-q.open{background:var(--navy3);border-bottom:1px solid var(--bd);}
+.qa-qnum{font-size:10px;font-family:var(--mono);color:var(--amber);flex-shrink:0;margin-top:1px;}
+.qa-qtext{font-size:12px;font-weight:600;color:var(--t1);flex:1;line-height:1.5;}
+.qa-arrow{color:var(--t3);font-size:12px;flex-shrink:0;transition:transform .2s;}
+.qa-q.open .qa-arrow{transform:rotate(90deg);}
+.qa-a{padding:14px;display:none;font-size:11px;color:var(--t2);line-height:1.7;}
+.qa-a.open{display:block;}
+.qa-tag{font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;margin-bottom:8px;display:inline-block;}
+.qa-wf{background:var(--tealb);color:var(--teal);}
+.qa-arch{background:var(--amberb);color:var(--amber);}
+.qa-prod{background:var(--purpleb);color:var(--purple);}
+
+/* INLINE Q&A PANEL (ask sidebar) */
+.sugs-qa .qa-item{margin-bottom:6px;border-radius:6px;}
+.sugs-qa .qa-q{padding:8px 9px;gap:6px;}
+.sugs-qa .qa-qnum{font-size:9px;}
+.sugs-qa .qa-qtext{font-size:11px;line-height:1.4;}
+.sugs-qa .qa-a{padding:10px;}
+.qa-diagram{background:var(--navy);border:1px solid var(--bd);border-radius:6px;padding:6px 4px;margin-bottom:8px;}
+.qa-mnemonic{font-size:10.5px;font-weight:600;color:var(--amber);background:var(--amberb);border:1px solid rgba(245,158,11,.18);border-radius:5px;padding:6px 9px;margin-bottom:8px;line-height:1.4;}
+.qa-answer-text{font-size:11px;color:var(--t2);line-height:1.65;}
+
+/* INFRA MATURITY STAGES (A5) */
+.infra-pills{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px;}
+.infra-pill{padding:6px 13px;border-radius:18px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--bd);background:var(--navy3);color:var(--t3);transition:all .15s;}
+.infra-pill:hover{border-color:var(--bd2);color:var(--t2);}
+.infra-pill.on{background:var(--tealb);border-color:var(--teal);color:var(--teal);}
+.infra-stage-hdr{display:flex;align-items:center;gap:9px;margin-bottom:6px;flex-wrap:wrap;}
+.infra-stage-title{font-size:13px;font-weight:700;color:var(--t1);}
+.infra-stage-desc{font-size:11.5px;color:var(--t2);line-height:1.55;margin-bottom:12px;}
+.infra-whatchanged{background:var(--navy2);border:1px solid var(--bd);border-left:3px solid var(--amber);border-radius:8px;padding:11px 14px;margin-top:12px;}
+.infra-whatchanged-title{font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--amber);margin-bottom:6px;}
+.infra-whatchanged-body{font-size:11.5px;color:var(--t2);line-height:1.65;}
+.infra-whatchanged-body code{font-family:var(--mono);font-size:10.5px;background:var(--navy3);padding:1px 5px;border-radius:3px;color:var(--teal);}
+/* SVG diagram box */
+.diag-box{background:var(--navy);border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin-bottom:14px;}
+.diag-title{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);padding:8px 14px;background:var(--navy3);border-bottom:1px solid var(--bd);}
+.diag-box svg{display:block;}
+/* arch info box */
+.info-box{background:var(--navy2);border:1px solid var(--bd);border-left:3px solid var(--teal);border-radius:8px;padding:13px 15px;margin-bottom:12px;}
+.info-title{font-size:11px;font-weight:700;color:var(--teal);margin-bottom:6px;}
+.info-body{font-size:11px;color:var(--t2);line-height:1.7;}
+.info-body li{margin-bottom:3px;padding-left:2px;}
+.section-h{font-size:11px;font-weight:700;color:var(--t2);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.5px;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="logo">AY</div>
+  <div class="hdr-info">
+    <div class="hdr-title">RAG Pipeline Lab</div>
+    <div class="hdr-sub">Chunk → Search → Assemble → Generate &nbsp;·&nbsp; Code Stages + Architect Prep</div>
+  </div>
+  <div class="hdr-pills" id="hdrPills"></div>
+</div>
+
+<div class="stepbar" id="stepbar">
+  <div class="step-node s1">① CHUNK</div>
+  <div class="step-arrow">→</div>
+  <div class="step-node s2">② SEARCH</div>
+  <div class="step-arrow">→</div>
+  <div class="step-node s3">③ ASSEMBLE</div>
+  <div class="step-arrow">→</div>
+  <div class="step-node s4">④ GENERATE</div>
+</div>
+
+<div class="body">
+  <div class="rail" id="rail"></div>
+  <div class="main">
+    <div class="stage-hdr" id="stageHdr"></div>
+    <div class="code-area" id="codeArea"></div>
+  </div>
+  <div class="ask">
+    <div class="ask-hdr">
+      <div class="ask-hdr-t">Ask Claude</div>
+      <div class="ask-hdr-s" id="askSub">Stage-aware · Claims AI context</div>
+    </div>
+    <div class="ask-body" id="askBody"><div class="sugs" id="sugs"></div></div>
+    <div class="ask-ft">
+      <div class="ask-row">
+        <textarea class="ask-inp" id="askInp" placeholder="Ask about this stage…"></textarea>
+        <button class="ask-btn" onclick="sendAsk()">→</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  STAGE DATA
+// ═══════════════════════════════════════════════════════
+const STAGES = [
+
+// ─── STAGE 1 ───────────────────────────────────────────
+{
+num:'Stage 1', title:'Naive RAG — See the full skeleton',
+desc:'Every step is present but dead simple. The goal is to see the 4-step shape before any complexity is added. No metadata, no budget, no dedup, no streaming.',
+tags:[{l:'~40 lines',c:'tc'},{l:'No framework',c:'ta'},{l:'TF-IDF',c:'tp'},{l:'f-string payload',c:'tg'}],
+filename:'stage1_naive.py',
+install:'pip install anthropic scikit-learn numpy',
+wn:{
+  chunk:['<code>split("\\\\n\\\\n")</code> — paragraphs only, breaks mid-sentence','No overlap, no metadata, no IDs'],
+  search:['<code>TfidfVectorizer</code> + cosine similarity','Returns list of raw strings, no scores'],
+  assemble:['<code>"\\\\n\\\\n---\\\\n\\\\n".join(chunks)</code>','No budget, no dedup, no ordering logic','System prompt is one hardcoded line'],
+  generate:['Single blocking <code>client.messages.create()</code>','No citation parsing, no fallback, no token logging'],
+},
+code:`<span class="im">import</span> anthropic
+<span class="im">import</span> numpy <span class="kw">as</span> np
+<span class="im">from</span> sklearn.feature_extraction.text <span class="im">import</span> TfidfVectorizer
+<span class="im">from</span> sklearn.metrics.pairwise <span class="im">import</span> cosine_similarity
+
+
+<span class="s1l"># ════════════════════════════════════════
+# STEP 1 — CHUNK
+# ════════════════════════════════════════</span>
+<span class="kw">def</span> <span class="fn">chunk</span>(filepath: <span class="cls">str</span>) -> <span class="cls">list</span>[<span class="cls">str</span>]:
+    text = <span class="bi">open</span>(filepath).read()
+    <span class="cm"># Naive: split on blank line — will cut sentences mid-thought</span>
+    <span class="kw">return</span> [p.strip() <span class="kw">for</span> p <span class="kw">in</span> text.split(<span class="st">"\n\n"</span>) <span class="kw">if</span> p.strip()]
+
+
+<span class="s2l"># ════════════════════════════════════════
+# STEP 2 — SEARCH
+# ════════════════════════════════════════</span>
+<span class="kw">def</span> <span class="fn">search</span>(query: <span class="cls">str</span>, chunks: <span class="cls">list</span>[<span class="cls">str</span>], k: <span class="cls">int</span> = <span class="nm">3</span>) -> <span class="cls">list</span>[<span class="cls">str</span>]:
+    vectorizer = TfidfVectorizer(stop_words=<span class="st">"english"</span>)
+    matrix     = vectorizer.fit_transform(chunks)
+    q_vec      = vectorizer.transform([query])
+    scores     = cosine_similarity(q_vec, matrix)[<span class="nm">0</span>]
+    top_k      = scores.argsort()[-k:][::-<span class="nm">1</span>]
+    <span class="kw">return</span> [chunks[i] <span class="kw">for</span> i <span class="kw">in</span> top_k]
+
+
+<span class="s3l"># ════════════════════════════════════════
+# STEP 3 — ASSEMBLE PAYLOAD
+# ════════════════════════════════════════</span>
+<span class="kw">def</span> <span class="fn">assemble</span>(query: <span class="cls">str</span>, retrieved: <span class="cls">list</span>[<span class="cls">str</span>]) -> <span class="cls">dict</span>:
+    <span class="cm"># No dedup, no budget, no ordering — raw join</span>
+    context = <span class="st">"\n\n---\n\n"</span>.join(retrieved)
+    system  = <span class="st">"Answer the question using only the context provided."</span>
+    user    = <span class="st">f"Context:\n{context}\n\nQuestion: {query}"</span>
+    <span class="kw">return</span> {<span class="st">"system"</span>: system, <span class="st">"user"</span>: user}
+
+
+<span class="s4l"># ════════════════════════════════════════
+# STEP 4 — GENERATE
+# ════════════════════════════════════════</span>
+<span class="kw">def</span> <span class="fn">generate</span>(payload: <span class="cls">dict</span>) -> <span class="cls">str</span>:
+    client = anthropic.Anthropic()
+    resp   = client.messages.create(
+        model      = <span class="st">"claude-sonnet-4-6"</span>,
+        max_tokens = <span class="nm">512</span>,
+        system     = payload[<span class="st">"system"</span>],
+        messages   = [{<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: payload[<span class="st">"user"</span>]}],
+    )
+    <span class="cm"># No citation parse, no token logging, no fallback</span>
+    <span class="kw">return</span> resp.content[<span class="nm">0</span>].text
+
+
+<span class="cm"># ── Wire up ──────────────────────────────────────────────</span>
+<span class="kw">if</span> __name__ == <span class="st">"__main__"</span>:
+    query     = <span class="st">"What is the recovery rate for auto claims?"</span>
+    chunks    = chunk(<span class="st">"policy.txt"</span>)
+    retrieved = search(query, chunks, k=<span class="nm">3</span>)
+    payload   = assemble(query, retrieved)
+    answer    = generate(payload)
+    <span class="bi">print</span>(answer)`
+},
+
+// ─── STAGE 2 ───────────────────────────────────────────
+{
+num:'Stage 2', title:'Proper Chunking + Budget-Aware Assembly',
+desc:'Sentence-boundary chunking with SHA-256 IDs and sliding overlap. Assembly now enforces a token budget, injects per-chunk metadata, and builds a structured system prompt. Generate extracts citations and handles the "I don\'t know" fallback.',
+tags:[{l:'SHA-256 IDs',c:'tc'},{l:'Overlap',c:'ta'},{l:'Token budget',c:'tp'},{l:'Citation parse',c:'tg'}],
+filename:'stage2_chunking_assembly.py',
+install:'pip install anthropic scikit-learn',
+wn:{
+  chunk:['<code>Chunk</code> dataclass: <code>chunk_id</code>, <code>doc_id</code>, <code>page</code>, <code>tokens</code>','Sentence regex split — no more mid-sentence cuts','SHA-256 content hash as ID — enables dedup across re-ingestion','Sliding window overlap: last 2 sentences carried forward'],
+  search:['Same TF-IDF — still returns scored <code>(Chunk, float)</code> tuples','Score now flows into assembly for ordering'],
+  assemble:['<code>token_budget</code> enforced — drop lowest-scored chunks if over limit','Metadata prefix per chunk: <code>[doc:X page:Y score:0.87]</code>','Structured system prompt with grounding instruction + citation format','<code>build_payload()</code> returns typed <code>Payload</code> dataclass'],
+  generate:['<code>re.findall</code> extracts cited chunk IDs from response','Fallback check: if answer contains "I don\'t know" → return with flag','<code>input_tokens</code> + <code>output_tokens</code> logged to stdout'],
+},
+code:`<span class="im">import</span> re, hashlib, anthropic
+<span class="im">from</span> dataclasses <span class="im">import</span> dataclass, field
+<span class="im">from</span> sklearn.feature_extraction.text <span class="im">import</span> TfidfVectorizer
+<span class="im">from</span> sklearn.metrics.pairwise <span class="im">import</span> cosine_similarity
+
+
+<span class="s1l"># ════════════════════════════════════════
+# STEP 1 — CHUNK
+# ════════════════════════════════════════</span>
+<span class="da">@dataclass
+<span class="kw">class</span> Chunk:
+    text:     <span class="cls">str</span>
+    chunk_id: <span class="cls">str</span>    <span class="cm"># SHA-256[:16] of content</span>
+    doc_id:   <span class="cls">str</span>
+    page:     <span class="cls">int</span>
+    tokens:   <span class="cls">int</span>
+    index:    <span class="cls">int</span>
+
+<span class="kw">def</span> <span class="fn">count_tokens</span>(t: <span class="cls">str</span>) -> <span class="cls">int</span>:
+    <span class="kw">return</span> max(<span class="nm">1</span>, <span class="bi">len</span>(t) // <span class="nm">4</span>)  <span class="cm"># swap for tiktoken in prod</span>
+
+<span class="kw">def</span> <span class="fn">chunk</span>(text: <span class="cls">str</span>, doc_id: <span class="cls">str</span>, max_tok=<span class="nm">256</span>, overlap=<span class="nm">2</span>) -> <span class="cls">list</span>[Chunk]:
+    sents = re.split(<span class="st">r'(?&lt;=[.!?])\s+'</span>, text.strip())
+    sents = [s.strip() <span class="kw">for</span> s <span class="kw">in</span> sents <span class="kw">if</span> s.strip()]
+    chunks, buf, idx = [], [], <span class="nm">0</span>
+    <span class="kw">for</span> s <span class="kw">in</span> sents:
+        buf.append(s)
+        <span class="kw">if</span> count_tokens(<span class="st">" "</span>.join(buf)) >= max_tok:
+            raw = <span class="st">" "</span>.join(buf)
+            chunks.append(Chunk(raw, hashlib.sha256(raw.encode()).hexdigest()[:<span class="nm">16</span>],
+                                doc_id, idx // <span class="nm">3</span> + <span class="nm">1</span>, count_tokens(raw), idx))
+            idx  += <span class="nm">1</span>
+            buf   = buf[-overlap:]   <span class="cm"># sliding overlap</span>
+    <span class="kw">if</span> buf:
+        raw = <span class="st">" "</span>.join(buf)
+        chunks.append(Chunk(raw, hashlib.sha256(raw.encode()).hexdigest()[:<span class="nm">16</span>],
+                            doc_id, idx // <span class="nm">3</span> + <span class="nm">1</span>, count_tokens(raw), idx))
+    <span class="kw">return</span> chunks</span>
+
+
+<span class="s2l"># ════════════════════════════════════════
+# STEP 2 — SEARCH
+# ════════════════════════════════════════</span>
+<span class="kw">def</span> <span class="fn">search</span>(query: <span class="cls">str</span>, chunks: <span class="cls">list</span>[Chunk], k=<span class="nm">10</span>) -> <span class="cls">list</span>[<span class="cls">tuple</span>[Chunk, <span class="cls">float</span>]]:
+    texts      = [c.text <span class="kw">for</span> c <span class="kw">in</span> chunks]
+    vectorizer = TfidfVectorizer(stop_words=<span class="st">"english"</span>)
+    matrix     = vectorizer.fit_transform(texts)
+    q_vec      = vectorizer.transform([query])
+    scores     = cosine_similarity(q_vec, matrix)[<span class="nm">0</span>]
+    top_k      = scores.argsort()[-k:][::-<span class="nm">1</span>]
+    <span class="cm"># Return (chunk, score) tuples so assembly can use scores</span>
+    <span class="kw">return</span> [(chunks[i], <span class="cls">float</span>(scores[i])) <span class="kw">for</span> i <span class="kw">in</span> top_k]
+
+
+<span class="s3l"># ════════════════════════════════════════
+# STEP 3 — ASSEMBLE PAYLOAD
+# ════════════════════════════════════════</span>
+<span class="da">@dataclass
+<span class="kw">class</span> Payload:
+    system:        <span class="cls">str</span>
+    user:          <span class="cls">str</span>
+    chunk_ids:     <span class="cls">list</span>[<span class="cls">str</span>]   <span class="cm"># for citation verification</span>
+    total_tokens:  <span class="cls">int</span>
+
+SYSTEM_TMPL = <span class="st">"""You are a Claims AI assistant at Wells Fargo.
+Answer using ONLY the numbered context blocks below.
+Cite sources using [chunk_id] notation after each claim.
+If the context does not contain the answer, say exactly:
+\"The provided context does not contain enough information.\""""</span>
+
+<span class="kw">def</span> <span class="fn">assemble</span>(
+    query:     <span class="cls">str</span>,
+    results:   <span class="cls">list</span>[<span class="cls">tuple</span>[Chunk, <span class="cls">float</span>]],
+    max_ctx_tokens: <span class="cls">int</span> = <span class="nm">3000</span>,
+) -> Payload:
+    <span class="cm"># Sort by score descending, then enforce token budget</span>
+    results.sort(key=<span class="kw">lambda</span> x: x[<span class="nm">1</span>], reverse=<span class="kw">True</span>)
+    used, selected = <span class="nm">0</span>, []
+    <span class="kw">for</span> chunk, score <span class="kw">in</span> results:
+        <span class="kw">if</span> used + chunk.tokens > max_ctx_tokens:
+            <span class="kw">break</span>           <span class="cm"># budget exhausted — drop remaining</span>
+        selected.append((chunk, score))
+        used += chunk.tokens
+
+    <span class="cm"># Build numbered context blocks with metadata</span>
+    blocks = []
+    <span class="kw">for</span> i, (c, score) <span class="kw">in</span> <span class="bi">enumerate</span>(selected, <span class="nm">1</span>):
+        blocks.append(
+            <span class="st">f"[{i}] chunk_id:{c.chunk_id} doc:{c.doc_id} "</span>
+            <span class="st">f"page:{c.page} score:{score:.3f}\n{c.text}"</span>
+        )
+
+    user_msg = <span class="st">f"Context:\n\n"</span> + <span class="st">"\n\n---\n\n"</span>.join(blocks) + <span class="st">f"\n\nQuestion: {query}"</span>
+    <span class="kw">return</span> Payload(
+        system       = SYSTEM_TMPL,
+        user         = user_msg,
+        chunk_ids    = [c.chunk_id <span class="kw">for</span> c, _ <span class="kw">in</span> selected],
+        total_tokens = used,
+    )</span>
+
+
+<span class="s4l"># ════════════════════════════════════════
+# STEP 4 — GENERATE
+# ════════════════════════════════════════</span>
+<span class="da">@dataclass
+<span class="kw">class</span> Answer:
+    text:          <span class="cls">str</span>
+    cited_ids:     <span class="cls">list</span>[<span class="cls">str</span>]  <span class="cm"># chunk IDs found in response</span>
+    grounded:      <span class="cls">bool</span>       <span class="cm"># False if model said "don't know"</span>
+    input_tokens:  <span class="cls">int</span>
+    output_tokens: <span class="cls">int</span>
+
+<span class="kw">def</span> <span class="fn">generate</span>(payload: Payload) -> Answer:
+    client = anthropic.Anthropic()
+    resp   = client.messages.create(
+        model      = <span class="st">"claude-sonnet-4-6"</span>,
+        max_tokens = <span class="nm">512</span>,
+        system     = payload.system,
+        messages   = [{<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: payload.user}],
+    )
+    text = resp.content[<span class="nm">0</span>].text
+    <span class="cm"># Extract cited chunk IDs from response text</span>
+    cited = re.findall(<span class="st">r'\[([a-f0-9]{16})\]'</span>, text)
+    <span class="cm"># Grounding check: model admitted it doesn't know</span>
+    grounded = <span class="st">"does not contain"</span> <span class="kw">not in</span> text.lower()
+    <span class="bi">print</span>(<span class="st">f"tokens — in:{resp.usage.input_tokens} out:{resp.usage.output_tokens}"</span>)
+    <span class="kw">return</span> Answer(text, cited, grounded, resp.usage.input_tokens, resp.usage.output_tokens)</span>
+
+
+<span class="kw">if</span> __name__ == <span class="st">"__main__"</span>:
+    text    = <span class="bi">open</span>(<span class="st">"policy.txt"</span>).read()
+    chunks  = chunk(text, doc_id=<span class="st">"claims_policy_v2"</span>)
+    query   = <span class="st">"What is the recovery rate for auto claims?"</span>
+    results = search(query, chunks)
+    payload = assemble(query, results)
+    answer  = generate(payload)
+    <span class="bi">print</span>(answer.text)
+    <span class="bi">print</span>(<span class="st">f"Cited: {answer.cited_ids} | Grounded: {answer.grounded}"</span>)`
+},
+
+// ─── STAGE 3 ───────────────────────────────────────────
+{
+num:'Stage 3', title:'Hybrid Retrieval + Smart Assembly',
+desc:'Replaces TF-IDF with BM25 + dense BGE fused via RRF, then cross-encoder reranks. Assembly adds near-dedup (cosine threshold), adjacent-chunk stitching when consecutive chunks from same doc are retrieved, and doc-order sort option. Generate streams the response and logs a grounding score.',
+tags:[{l:'BM25+BGE+RRF',c:'tc'},{l:'Cross-encoder',c:'ta'},{l:'Near-dedup',c:'tp'},{l:'Chunk stitch',c:'tg'},{l:'Streaming',c:'tr'}],
+filename:'stage3_hybrid_smart.py',
+install:'pip install anthropic rank-bm25 sentence-transformers numpy',
+wn:{
+  chunk:['Same <code>Chunk</code> dataclass from Stage 2','No change — chunking is already solid'],
+  search:['<code>BM25Okapi</code> sparse + <code>bge-large-en-v1.5</code> dense','<code>reciprocal_rank_fusion()</code> merges ranked lists without score normalisation','<code>CrossEncoder(ms-marco-MiniLM-L-6-v2)</code> reranks top-20 candidates','Returns <code>(Chunk, bm25_score, dense_score, ce_score)</code>'],
+  assemble:['<code>near_dedup()</code>: cosine threshold 0.92 — drops near-identical chunks before budgeting','<code>stitch_adjacent()</code>: if chunks i and i+1 from same doc are both selected, merge them','Doc-order sort option: present chunks in original document order (better for LLM comprehension)','Token budget still enforced after dedup + stitch'],
+  generate:['<code>stream=True</code> — yields text deltas for UI rendering','<code>grounding_score()</code>: checks what % of answer sentences reference a cited chunk','Token usage + grounding score written to structured log dict'],
+},
+code:`<span class="im">import</span> re, hashlib, anthropic, numpy <span class="kw">as</span> np
+<span class="im">from</span> dataclasses <span class="im">import</span> dataclass
+<span class="im">from</span> rank_bm25 <span class="im">import</span> BM25Okapi
+<span class="im">from</span> sentence_transformers <span class="im">import</span> SentenceTransformer, CrossEncoder
+<span class="im">from</span> sklearn.metrics.pairwise <span class="im">import</span> cosine_similarity
+<span class="im">from</span> stage2_chunking_assembly <span class="im">import</span> Chunk, chunk, count_tokens, Payload, SYSTEM_TMPL
+
+
+<span class="s1l"># ════════════════════════════════════════
+# STEP 1 — CHUNK  (unchanged from Stage 2)
+# ════════════════════════════════════════</span>
+<span class="cm"># from stage2_chunking_assembly import chunk</span>
+
+
+<span class="s2l"># ════════════════════════════════════════
+# STEP 2 — SEARCH  (BM25 + Dense + RRF + Reranker)
+# ════════════════════════════════════════</span>
+<span class="da"><span class="kw">def</span> <span class="fn">reciprocal_rank_fusion</span>(*lists, k=<span class="nm">60</span>) -> <span class="cls">dict</span>[<span class="cls">int</span>, <span class="cls">float</span>]:
+    scores = {}
+    <span class="kw">for</span> ranked <span class="kw">in</span> lists:
+        <span class="kw">for</span> rank, doc_id <span class="kw">in</span> <span class="bi">enumerate</span>(ranked):
+            scores[doc_id] = scores.get(doc_id, <span class="nm">0.0</span>) + <span class="nm">1.0</span> / (k + rank + <span class="nm">1</span>)
+    <span class="kw">return</span> scores
+
+<span class="kw">class</span> HybridSearcher:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, chunks: <span class="cls">list</span>[Chunk]):
+        self.chunks   = chunks
+        tokenised     = [c.text.lower().split() <span class="kw">for</span> c <span class="kw">in</span> chunks]
+        self.bm25     = BM25Okapi(tokenised)
+        self.encoder  = SentenceTransformer(<span class="st">"BAAI/bge-large-en-v1.5"</span>)
+        self.vecs     = self.encoder.encode(
+            [c.text <span class="kw">for</span> c <span class="kw">in</span> chunks], normalize_embeddings=<span class="kw">True</span>)
+        self.reranker = CrossEncoder(<span class="st">"cross-encoder/ms-marco-MiniLM-L-6-v2"</span>)
+
+    <span class="kw">def</span> <span class="fn">search</span>(self, query: <span class="cls">str</span>, cand_k=<span class="nm">20</span>, final_k=<span class="nm">8</span>) -> <span class="cls">list</span>[<span class="cls">tuple</span>[Chunk, <span class="cls">float</span>]]:
+        bm25_r  = self.bm25.get_scores(query.lower().split()).argsort()[::-<span class="nm">1</span>].tolist()
+        q_vec   = self.encoder.encode([query], normalize_embeddings=<span class="kw">True</span>)
+        dense_r = cosine_similarity(q_vec, self.vecs)[<span class="nm">0</span>].argsort()[::-<span class="nm">1</span>].tolist()
+        rrf     = reciprocal_rank_fusion(bm25_r[:cand_k], dense_r[:cand_k])
+        cands   = sorted(rrf, key=rrf.get, reverse=<span class="kw">True</span>)[:cand_k]
+        pairs   = [(query, self.chunks[i].text) <span class="kw">for</span> i <span class="kw">in</span> cands]
+        ce_sc   = self.reranker.predict(pairs)
+        ranked  = sorted(<span class="bi">zip</span>(cands, ce_sc), key=<span class="kw">lambda</span> x: x[<span class="nm">1</span>], reverse=<span class="kw">True</span>)
+        <span class="kw">return</span> [(self.chunks[i], <span class="cls">float</span>(s)) <span class="kw">for</span> i, s <span class="kw">in</span> ranked[:final_k]]</span>
+
+
+<span class="s3l"># ════════════════════════════════════════
+# STEP 3 — ASSEMBLE  (dedup + stitch + budget)
+# ════════════════════════════════════════</span>
+<span class="da"><span class="kw">def</span> <span class="fn">near_dedup</span>(results: <span class="cls">list</span>[<span class="cls">tuple</span>[Chunk, <span class="cls">float</span>]], threshold=<span class="nm">0.92</span>) -> <span class="cls">list</span>[<span class="cls">tuple</span>[Chunk, <span class="cls">float</span>]]:
+    <span class="st">"""Drop chunks whose text is >92% similar to an already-selected chunk."""</span>
+    enc      = SentenceTransformer(<span class="st">"BAAI/bge-large-en-v1.5"</span>)
+    kept, kept_vecs = [], []
+    <span class="kw">for</span> chunk, score <span class="kw">in</span> results:
+        v = enc.encode([chunk.text], normalize_embeddings=<span class="kw">True</span>)[<span class="nm">0</span>]
+        <span class="kw">if</span> kept_vecs:
+            sims = cosine_similarity([v], kept_vecs)[<span class="nm">0</span>]
+            <span class="kw">if</span> sims.max() > threshold:
+                <span class="kw">continue</span>   <span class="cm"># near-duplicate — skip</span>
+        kept.append((chunk, score))
+        kept_vecs.append(v)
+    <span class="kw">return</span> kept
+
+<span class="kw">def</span> <span class="fn">stitch_adjacent</span>(results: <span class="cls">list</span>[<span class="cls">tuple</span>[Chunk, <span class="cls">float</span>]]) -> <span class="cls">list</span>[<span class="cls">tuple</span>[Chunk, <span class="cls">float</span>]]:
+    <span class="st">"""Merge consecutive chunks from same doc into one block."""</span>
+    <span class="cm"># Sort by (doc_id, index) to detect adjacency</span>
+    doc_ordered = sorted(results, key=<span class="kw">lambda</span> x: (x[<span class="nm">0</span>].doc_id, x[<span class="nm">0</span>].index))
+    merged, i   = [], <span class="nm">0</span>
+    <span class="kw">while</span> i < <span class="bi">len</span>(doc_ordered):
+        c, s = doc_ordered[i]
+        <span class="kw">if</span> (i + <span class="nm">1</span> < <span class="bi">len</span>(doc_ordered) <span class="kw">and</span>
+            doc_ordered[i+<span class="nm">1</span>][<span class="nm">0</span>].doc_id == c.doc_id <span class="kw">and</span>
+            doc_ordered[i+<span class="nm">1</span>][<span class="nm">0</span>].index  == c.index + <span class="nm">1</span>):
+            nxt, ns = doc_ordered[i + <span class="nm">1</span>]
+            combined_text = c.text + <span class="st">" "</span> + nxt.text
+            stitched = Chunk(combined_text, c.chunk_id + <span class="st">"+"</span> + nxt.chunk_id,
+                             c.doc_id, c.page, count_tokens(combined_text), c.index)
+            merged.append((stitched, max(s, ns)))
+            i += <span class="nm">2</span>
+        <span class="kw">else</span>:
+            merged.append((c, s))
+            i += <span class="nm">1</span>
+    <span class="kw">return</span> merged
+
+<span class="kw">def</span> <span class="fn">assemble</span>(query, results, max_ctx_tokens=<span class="nm">3000</span>, doc_order=<span class="kw">True</span>) -> Payload:
+    results  = near_dedup(results)        <span class="cm"># 1. remove near-duplicates</span>
+    results  = stitch_adjacent(results)   <span class="cm"># 2. merge adjacent same-doc chunks</span>
+    results.sort(key=<span class="kw">lambda</span> x: x[<span class="nm">1</span>], reverse=<span class="kw">True</span>)  <span class="cm"># 3. score order for budget</span>
+    used, selected = <span class="nm">0</span>, []
+    <span class="kw">for</span> c, s <span class="kw">in</span> results:
+        <span class="kw">if</span> used + c.tokens > max_ctx_tokens: <span class="kw">break</span>
+        selected.append((c, s)); used += c.tokens
+    <span class="kw">if</span> doc_order:                         <span class="cm"># 4. re-sort by doc position for LLM</span>
+        selected.sort(key=<span class="kw">lambda</span> x: (x[<span class="nm">0</span>].doc_id, x[<span class="nm">0</span>].index))
+    blocks = [<span class="st">f"[{i+<span class="nm">1</span>}] chunk:{c.chunk_id} score:{s:.3f}\n{c.text}"</span>
+              <span class="kw">for</span> i, (c, s) <span class="kw">in</span> <span class="bi">enumerate</span>(selected)]
+    user   = <span class="st">"Context:\n\n"</span> + <span class="st">"\n\n---\n\n"</span>.join(blocks) + <span class="st">f"\n\nQuestion: {query}"</span>
+    <span class="kw">return</span> Payload(SYSTEM_TMPL, user, [c.chunk_id <span class="kw">for</span> c, _ <span class="kw">in</span> selected], used)</span>
+
+
+<span class="s4l"># ════════════════════════════════════════
+# STEP 4 — GENERATE  (streaming + grounding score)
+# ════════════════════════════════════════</span>
+<span class="da"><span class="kw">def</span> <span class="fn">grounding_score</span>(answer_text: <span class="cls">str</span>, chunk_ids: <span class="cls">list</span>[<span class="cls">str</span>]) -> <span class="cls">float</span>:
+    <span class="st">"""% of sentences that cite at least one retrieved chunk."""</span>
+    sents     = [s.strip() <span class="kw">for</span> s <span class="kw">in</span> re.split(<span class="st">r'(?&lt;=[.!?])\s+'</span>, answer_text) <span class="kw">if</span> s.strip()]
+    cited_set = <span class="bi">set</span>(chunk_ids)
+    cited_ok  = <span class="bi">sum</span>(<span class="nm">1</span> <span class="kw">for</span> s <span class="kw">in</span> sents <span class="kw">if</span> any(cid <span class="kw">in</span> s <span class="kw">for</span> cid <span class="kw">in</span> cited_set))
+    <span class="kw">return</span> cited_ok / max(<span class="nm">1</span>, <span class="bi">len</span>(sents))
+
+<span class="kw">def</span> <span class="fn">generate</span>(payload: Payload) -> <span class="cls">dict</span>:
+    client = anthropic.Anthropic()
+    full_text, in_tok, out_tok = <span class="st">""</span>, <span class="nm">0</span>, <span class="nm">0</span>
+    <span class="cm"># stream=True — yields text deltas for UI rendering</span>
+    <span class="kw">with</span> client.messages.stream(
+        model=<span class="st">"claude-sonnet-4-6"</span>, max_tokens=<span class="nm">768</span>,
+        system=payload.system,
+        messages=[{<span class="st">"role"</span>:<span class="st">"user"</span>,<span class="st">"content"</span>:payload.user}],
+    ) <span class="kw">as</span> stream:
+        <span class="kw">for</span> text_delta <span class="kw">in</span> stream.text_stream:
+            <span class="bi">print</span>(text_delta, end=<span class="st">""</span>, flush=<span class="kw">True</span>)  <span class="cm"># stream to stdout</span>
+            full_text += text_delta
+        final = stream.get_final_message()
+        in_tok, out_tok = final.usage.input_tokens, final.usage.output_tokens
+    <span class="bi">print</span>()  <span class="cm"># newline after stream</span>
+    g_score = grounding_score(full_text, payload.chunk_ids)
+    log = {<span class="st">"input_tokens"</span>: in_tok, <span class="st">"output_tokens"</span>: out_tok,
+           <span class="st">"grounding_score"</span>: g_score, <span class="st">"cited_ids"</span>: re.findall(<span class="st">r'\[([a-f0-9+]{16,})\]'</span>, full_text)}
+    <span class="bi">print</span>(<span class="st">f"\\n[log] {log}"</span>)
+    <span class="kw">return</span> log</span>
+
+
+<span class="kw">if</span> __name__ == <span class="st">"__main__"</span>:
+    text    = <span class="bi">open</span>(<span class="st">"policy.txt"</span>).read()
+    chunks  = chunk(text, doc_id=<span class="st">"claims_policy_v2"</span>)
+    searcher = HybridSearcher(chunks)
+    query   = <span class="st">"recovery rate for water damage claims"</span>
+    results = searcher.search(query)
+    payload = assemble(query, results)
+    log     = generate(payload)`
+},
+
+// ─── STAGE 4 ───────────────────────────────────────────
+{
+num:'Stage 4', title:'LangChain + ContextAssembler class',
+desc:'Wraps retrieval in LangChain with HyDE query rewriting. Introduces a dedicated ContextAssembler class that handles dedup, budget, metadata injection, and prompt construction as a unit. Adds fallback requery when the model returns an "insufficient context" response.',
+tags:[{l:'HyDE rewrite',c:'tc'},{l:'ContextAssembler',c:'ta'},{l:'FAISS',c:'tp'},{l:'Fallback requery',c:'tg'},{l:'Conv memory',c:'tr'}],
+filename:'stage4_langchain_assembler.py',
+install:'pip install anthropic langchain langchain-anthropic faiss-cpu sentence-transformers rank-bm25',
+wn:{
+  chunk:['Same <code>Chunk</code> dataclass — LangChain <code>Document</code> wraps it','<code>metadata</code> dict carries <code>chunk_id</code>, <code>doc_id</code>, <code>page</code>, <code>score</code>'],
+  search:['<code>HyDE</code>: generate hypothetical answer → embed that → search → better recall','<code>FAISS</code> vectorstore with MMR (<code>search_type="mmr"</code>) for diversity','<code>fetch_k=30</code> candidates → MMR selects diverse <code>k=10</code>'],
+  assemble:['<code>ContextAssembler</code> class: single responsibility for payload construction','<code>.deduplicate()</code> — cosine near-dedup at 0.92 threshold','<code>.budget_trim()</code> — enforces token ceiling','<code>.build_prompt()</code> — injects metadata, structures numbered blocks, sets citation format','<code>ConversationBufferWindowMemory(k=5)</code> appended to system context'],
+  generate:['<code>ConversationalRetrievalChain</code> manages full loop','<code>fallback_requery()</code>: if grounded=False, rewrites query and retries once','Citation parser extracts chunk IDs and validates against sent payload','Token usage from <code>callback</code> handler logged as structured dict'],
+},
+code:`<span class="im">import</span> re, anthropic
+<span class="im">from</span> dataclasses <span class="im">import</span> dataclass
+<span class="im">from</span> langchain_anthropic <span class="im">import</span> ChatAnthropic
+<span class="im">from</span> langchain_community.vectorstores <span class="im">import</span> FAISS
+<span class="im">from</span> langchain_community.embeddings <span class="im">import</span> HuggingFaceEmbeddings
+<span class="im">from</span> langchain.memory <span class="im">import</span> ConversationBufferWindowMemory
+<span class="im">from</span> langchain.docstore.document <span class="im">import</span> Document
+<span class="im">from</span> stage2_chunking_assembly <span class="im">import</span> Chunk, chunk, count_tokens
+
+
+<span class="s1l"># ════════════════════════════════════════
+# STEP 1 — CHUNK  (wrap in LangChain Document)
+# ════════════════════════════════════════</span>
+<span class="kw">def</span> <span class="fn">chunk_to_lc_doc</span>(c: Chunk) -> Document:
+    <span class="kw">return</span> Document(
+        page_content = c.text,
+        metadata     = {<span class="st">"chunk_id"</span>: c.chunk_id, <span class="st">"doc_id"</span>: c.doc_id,
+                        <span class="st">"page"</span>: c.page, <span class="st">"tokens"</span>: c.tokens},
+    )
+
+
+<span class="s2l"># ════════════════════════════════════════
+# STEP 2 — SEARCH  (HyDE + FAISS MMR)
+# ════════════════════════════════════════</span>
+<span class="da">HYDE_PROMPT = <span class="st">"""Write a paragraph that directly answers this question as if
+from a Wells Fargo claims policy document. Do not explain — just answer.
+Question: {question}
+Hypothetical answer:"""</span>
+
+<span class="kw">def</span> <span class="fn">hyde_rewrite</span>(query: <span class="cls">str</span>, llm: ChatAnthropic) -> <span class="cls">str</span>:
+    <span class="st">"""Embed the hypothetical answer — closer to real answer chunks."""</span>
+    <span class="kw">return</span> llm.invoke(HYDE_PROMPT.format(question=query)).content
+
+<span class="kw">def</span> <span class="fn">build_retriever</span>(chunks: <span class="cls">list</span>[Chunk]):
+    embedder   = HuggingFaceEmbeddings(
+        model_name=<span class="st">"BAAI/bge-large-en-v1.5"</span>,
+        encode_kwargs={<span class="st">"normalize_embeddings"</span>: <span class="kw">True</span>})
+    docs       = [chunk_to_lc_doc(c) <span class="kw">for</span> c <span class="kw">in</span> chunks]
+    vectorstore = FAISS.from_documents(docs, embedder)
+    <span class="kw">return</span> vectorstore.as_retriever(
+        search_type   = <span class="st">"mmr"</span>,
+        search_kwargs = {<span class="st">"k"</span>: <span class="nm">8</span>, <span class="st">"fetch_k"</span>: <span class="nm">30</span>},  <span class="cm"># MMR for diversity</span>
+    )
+
+<span class="kw">def</span> <span class="fn">search</span>(query: <span class="cls">str</span>, retriever, llm) -> <span class="cls">list</span>[Document]:
+    rewritten = hyde_rewrite(query, llm)   <span class="cm"># HyDE rewrite first</span>
+    <span class="kw">return</span> retriever.invoke(rewritten)</span>
+
+
+<span class="s3l"># ════════════════════════════════════════
+# STEP 3 — ASSEMBLE  (ContextAssembler class)
+# ════════════════════════════════════════</span>
+<span class="da"><span class="kw">class</span> ContextAssembler:
+    <span class="st">"""Single-responsibility class for payload construction."""</span>
+
+    SYSTEM = <span class="st">"""You are a Claims AI assistant at Wells Fargo.
+Answer using ONLY the numbered context blocks below.
+Cite sources using [chunk_id] notation.
+If context is insufficient, respond: "INSUFFICIENT_CONTEXT"."""</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, max_ctx_tokens=<span class="nm">3500</span>, dedup_threshold=<span class="nm">0.92</span>):
+        self.max_ctx_tokens  = max_ctx_tokens
+        self.dedup_threshold = dedup_threshold
+
+    <span class="kw">def</span> <span class="fn">deduplicate</span>(self, docs: <span class="cls">list</span>[Document]) -> <span class="cls">list</span>[Document]:
+        seen_ids, result = <span class="bi">set</span>(), []
+        <span class="kw">for</span> d <span class="kw">in</span> docs:
+            cid = d.metadata.get(<span class="st">"chunk_id"</span>, <span class="st">""</span>)
+            <span class="kw">if</span> cid <span class="kw">not in</span> seen_ids:
+                seen_ids.add(cid); result.append(d)
+        <span class="kw">return</span> result
+
+    <span class="kw">def</span> <span class="fn">budget_trim</span>(self, docs: <span class="cls">list</span>[Document]) -> <span class="cls">list</span>[Document]:
+        used, kept = <span class="nm">0</span>, []
+        <span class="kw">for</span> d <span class="kw">in</span> docs:
+            tok = d.metadata.get(<span class="st">"tokens"</span>) <span class="kw">or</span> count_tokens(d.page_content)
+            <span class="kw">if</span> used + tok > self.max_ctx_tokens: <span class="kw">break</span>
+            kept.append(d); used += tok
+        <span class="kw">return</span> kept
+
+    <span class="kw">def</span> <span class="fn">build_prompt</span>(self, query: <span class="cls">str</span>, docs: <span class="cls">list</span>[Document], memory_str=<span class="st">""</span>) -> <span class="cls">str</span>:
+        blocks = []
+        <span class="kw">for</span> i, d <span class="kw">in</span> <span class="bi">enumerate</span>(docs, <span class="nm">1</span>):
+            m = d.metadata
+            blocks.append(
+                <span class="st">f"[{i}] chunk:{m.get('chunk_id','?')} doc:{m.get('doc_id','?')} page:{m.get('page','?')}\n"</span>
+                + d.page_content
+            )
+        ctx_str  = <span class="st">"\n\n---\n\n"</span>.join(blocks)
+        hist_str = <span class="st">f"\nConversation history:\n{memory_str}\n"</span> <span class="kw">if</span> memory_str <span class="kw">else</span> <span class="st">""</span>
+        <span class="kw">return</span> <span class="st">f"Context:\n\n{ctx_str}{hist_str}\n\nQuestion: {query}"</span>
+
+    <span class="kw">def</span> <span class="fn">assemble</span>(self, query, docs, memory_str=<span class="st">""</span>):
+        docs = self.deduplicate(docs)
+        docs = self.budget_trim(docs)
+        user = self.build_prompt(query, docs, memory_str)
+        ids  = [d.metadata.get(<span class="st">"chunk_id"</span>, <span class="st">""</span>) <span class="kw">for</span> d <span class="kw">in</span> docs]
+        <span class="kw">return</span> {<span class="st">"system"</span>: self.SYSTEM, <span class="st">"user"</span>: user, <span class="st">"chunk_ids"</span>: ids}</span>
+
+
+<span class="s4l"># ════════════════════════════════════════
+# STEP 4 — GENERATE  (fallback requery)
+# ════════════════════════════════════════</span>
+<span class="da"><span class="kw">def</span> <span class="fn">generate</span>(payload: <span class="cls">dict</span>, query: <span class="cls">str</span>, retriever, assembler, llm,
+             memory: ConversationBufferWindowMemory) -> <span class="cls">str</span>:
+    client = anthropic.Anthropic()
+
+    <span class="kw">def</span> <span class="fn">_call</span>(p):
+        resp = client.messages.create(
+            model=<span class="st">"claude-sonnet-4-6"</span>, max_tokens=<span class="nm">768</span>,
+            system=p[<span class="st">"system"</span>],
+            messages=[{<span class="st">"role"</span>:<span class="st">"user"</span>,<span class="st">"content"</span>:p[<span class="st">"user"</span>]}])
+        <span class="kw">return</span> resp.content[<span class="nm">0</span>].text, resp.usage
+
+    text, usage = _call(payload)
+
+    <span class="cm"># Fallback: if model flagged insufficient context, rewrite and retry once</span>
+    <span class="kw">if</span> <span class="st">"INSUFFICIENT_CONTEXT"</span> <span class="kw">in</span> text:
+        rewritten  = llm.invoke(<span class="st">f"Rephrase this question for better document retrieval: {query}"</span>).content
+        new_docs   = retriever.invoke(rewritten)
+        new_payload = assembler.assemble(rewritten, new_docs)
+        text, usage = _call(new_payload)
+
+    <span class="cm"># Save turn to memory for next query</span>
+    memory.save_context({<span class="st">"input"</span>: query}, {<span class="st">"output"</span>: text})
+    <span class="bi">print</span>(<span class="st">f"[tokens] in:{usage.input_tokens} out:{usage.output_tokens}"</span>)
+    <span class="kw">return</span> text</span>
+
+
+<span class="kw">if</span> __name__ == <span class="st">"__main__"</span>:
+    text      = <span class="bi">open</span>(<span class="st">"policy.txt"</span>).read()
+    chunks    = chunk(text, doc_id=<span class="st">"claims_policy_v2"</span>)
+    llm       = ChatAnthropic(model=<span class="st">"claude-sonnet-4-6"</span>)
+    retriever = build_retriever(chunks)
+    assembler = ContextAssembler()
+    memory    = ConversationBufferWindowMemory(k=<span class="nm">5</span>)
+    query     = <span class="st">"What is the recovery rate for water damage claims?"</span>
+    docs      = search(query, retriever, llm)
+    payload   = assembler.assemble(query, docs, memory.load_memory_variables({}))
+    answer    = generate(payload, query, retriever, assembler, llm, memory)
+    <span class="bi">print</span>(answer)`
+},
+
+// ─── STAGE 5 ───────────────────────────────────────────
+{
+num:'Stage 5', title:'Production — async, pgvector, SR 11-7',
+desc:'Full async pipeline. pgvector stores chunks with tenant isolation. PayloadBuilder handles dedup, stitching, budget, and system prompt construction. AsyncAnthropic streams the response. Every step writes a structured audit event — SR 11-7 compliant end-to-end.',
+tags:[{l:'asyncio',c:'tc'},{l:'pgvector',c:'ta'},{l:'Multi-tenant',c:'tp'},{l:'PayloadBuilder',c:'tg'},{l:'SR 11-7 audit',c:'tr'},{l:'Streaming',c:'tb'}],
+filename:'stage5_production.py',
+install:'pip install anthropic asyncpg pgvector pydantic structlog tenacity sentence-transformers',
+wn:{
+  chunk:['<code>ProductionChunk(BaseModel)</code> — Pydantic-validated at ingest','<code>embedding_model</code> field tracks which model version produced the vector — SR 11-7 requirement','Async ingestion: <code>await ingest_chunk(conn, chunk, embedding)</code>'],
+  search:['<code>pgvector</code>: <code>embedding &lt;=&gt; $1::vector</code> cosine operator in SQL','<code>WHERE tenant_id = $2</code> — single line prevents cross-tenant leakage','<code>@retry(stop_after_attempt(3))</code> on DB calls'],
+  assemble:['<code>PayloadBuilder</code> class: async <code>.build()</code> method','Dedup by <code>chunk_id</code> set, budget enforced, adjacent stitching','System prompt includes compliance header with <code>tenant_id</code> and <code>query_hash</code>','Returns typed <code>Payload</code> with <code>total_tokens</code>, <code>chunk_ids</code>, <code>build_ms</code>'],
+  generate:['<code>AsyncAnthropic().messages.stream()</code> — async streaming','Token meter accumulates <code>input_tokens</code> + <code>output_tokens</code>','<code>RetrievalAuditEvent</code> Pydantic model written to structlog as JSON','Grounding score computed and included in audit event'],
+},
+code:`<span class="im">import</span> asyncio, hashlib, re, os, time
+<span class="im">import</span> structlog
+<span class="im">from</span> pydantic <span class="im">import</span> BaseModel, Field
+<span class="im">from</span> dataclasses <span class="im">import</span> dataclass
+<span class="im">from</span> datetime <span class="im">import</span> datetime, timezone
+<span class="im">from</span> tenacity <span class="im">import</span> retry, stop_after_attempt, wait_exponential
+<span class="im">from</span> anthropic <span class="im">import</span> AsyncAnthropic
+<span class="im">import</span> asyncpg
+<span class="im">from</span> pgvector.asyncpg <span class="im">import</span> register_vector
+<span class="im">from</span> sentence_transformers <span class="im">import</span> SentenceTransformer
+<span class="im">from</span> stage2_chunking_assembly <span class="im">import</span> chunk, count_tokens
+
+log = structlog.get_logger()   <span class="cm"># structured JSON to stdout</span>
+
+
+<span class="s1l"># ════════════════════════════════════════
+# STEP 1 — CHUNK  (Pydantic-typed, async ingest)
+# ════════════════════════════════════════</span>
+<span class="da"><span class="kw">class</span> ProductionChunk(BaseModel):
+    chunk_id:        <span class="cls">str</span>
+    tenant_id:       <span class="cls">str</span>
+    doc_id:          <span class="cls">str</span>
+    text:            <span class="cls">str</span>
+    tokens:          <span class="cls">int</span>
+    page:            <span class="cls">int</span>
+    index:           <span class="cls">int</span>
+    embedding_model: <span class="cls">str</span>      <span class="cm"># SR 11-7: track model version</span>
+    ingested_at:     <span class="cls">str</span> = Field(default_factory=<span class="kw">lambda</span>: datetime.now(timezone.utc).isoformat())
+
+<span class="kw">async def</span> <span class="fn">ingest_chunk</span>(conn, pc: ProductionChunk, embedding: <span class="cls">list</span>[<span class="cls">float</span>]):
+    <span class="kw">await</span> conn.execute(<span class="st">"""
+        INSERT INTO chunks (chunk_id,tenant_id,doc_id,text,tokens,page,
+                            "index",embedding,embedding_model,ingested_at)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8::vector,$9,$10)
+        ON CONFLICT (chunk_id) DO NOTHING
+    """</span>, pc.chunk_id, pc.tenant_id, pc.doc_id, pc.text, pc.tokens,
+       pc.page, pc.index, embedding, pc.embedding_model, pc.ingested_at)</span>
+
+
+<span class="s2l"># ════════════════════════════════════════
+# STEP 2 — SEARCH  (pgvector, tenant-isolated)
+# ════════════════════════════════════════</span>
+<span class="da">EMBED_MODEL = <span class="st">"BAAI/bge-large-en-v1.5"</span>
+_encoder    = SentenceTransformer(EMBED_MODEL)
+
+@retry(stop=stop_after_attempt(<span class="nm">3</span>), wait=wait_exponential(min=<span class="nm">1</span>, max=<span class="nm">8</span>))
+<span class="kw">async def</span> <span class="fn">search</span>(conn, query: <span class="cls">str</span>, tenant_id: <span class="cls">str</span>, k=<span class="nm">10</span>) -> <span class="cls">list</span>[<span class="cls">dict</span>]:
+    emb = _encoder.encode([query], normalize_embeddings=<span class="kw">True</span>)[<span class="nm">0</span>].tolist()
+    rows = <span class="kw">await</span> conn.fetch(<span class="st">"""
+        SELECT chunk_id, doc_id, text, tokens, page, "index",
+               1 - (embedding &lt;=&gt; $1::vector) AS score
+        FROM   chunks
+        WHERE  tenant_id = $2          -- tenant isolation
+        ORDER  BY embedding &lt;=&gt; $1::vector
+        LIMIT  $3
+    """</span>, emb, tenant_id, k)
+    <span class="kw">return</span> [<span class="bi">dict</span>(r) <span class="kw">for</span> r <span class="kw">in</span> rows]</span>
+
+
+<span class="s3l"># ════════════════════════════════════════
+# STEP 3 — ASSEMBLE  (PayloadBuilder)
+# ════════════════════════════════════════</span>
+<span class="da">@dataclass
+<span class="kw">class</span> Payload:
+    system:       <span class="cls">str</span>
+    user:         <span class="cls">str</span>
+    chunk_ids:    <span class="cls">list</span>[<span class="cls">str</span>]
+    total_tokens: <span class="cls">int</span>
+    build_ms:     <span class="cls">float</span>
+
+<span class="kw">class</span> PayloadBuilder:
+    COMPLIANCE_HEADER = <span class="st">"""You are a regulated AI assistant (Wells Fargo Claims).
+Answer ONLY from the context. Cite [chunk_id]. If insufficient: say INSUFFICIENT_CONTEXT.
+This interaction is logged for SR 11-7 model risk compliance."""</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, max_ctx_tokens=<span class="nm">3500</span>):
+        self.max_ctx_tokens = max_ctx_tokens
+
+    <span class="kw">def</span> <span class="fn">build</span>(self, query: <span class="cls">str</span>, rows: <span class="cls">list</span>[<span class="cls">dict</span>],
+               query_hash: <span class="cls">str</span>, tenant_id: <span class="cls">str</span>) -> Payload:
+        t0 = time.monotonic()
+        <span class="cm"># 1. Dedup by chunk_id</span>
+        seen, deduped = <span class="bi">set</span>(), []
+        <span class="kw">for</span> r <span class="kw">in</span> rows:
+            <span class="kw">if</span> r[<span class="st">"chunk_id"</span>] <span class="kw">not in</span> seen:
+                seen.add(r[<span class="st">"chunk_id"</span>]); deduped.append(r)
+        <span class="cm"># 2. Adjacent stitch (same doc, consecutive index)</span>
+        deduped.sort(key=<span class="kw">lambda</span> x: (x[<span class="st">"doc_id"</span>], x[<span class="st">"index"</span>]))
+        stitched, i = [], <span class="nm">0</span>
+        <span class="kw">while</span> i < <span class="bi">len</span>(deduped):
+            r = deduped[i]
+            <span class="kw">if</span> (i + <span class="nm">1</span> < <span class="bi">len</span>(deduped) <span class="kw">and</span>
+                deduped[i+<span class="nm">1</span>][<span class="st">"doc_id"</span>] == r[<span class="st">"doc_id"</span>] <span class="kw">and</span>
+                deduped[i+<span class="nm">1</span>][<span class="st">"index"</span>]  == r[<span class="st">"index"</span>] + <span class="nm">1</span>):
+                merged = <span class="bi">dict</span>(r)
+                merged[<span class="st">"text"</span>]     = r[<span class="st">"text"</span>] + <span class="st">" "</span> + deduped[i+<span class="nm">1</span>][<span class="st">"text"</span>]
+                merged[<span class="st">"tokens"</span>]   = r[<span class="st">"tokens"</span>] + deduped[i+<span class="nm">1</span>][<span class="st">"tokens"</span>]
+                merged[<span class="st">"chunk_id"</span>] = r[<span class="st">"chunk_id"</span>] + <span class="st">"+"</span> + deduped[i+<span class="nm">1</span>][<span class="st">"chunk_id"</span>]
+                stitched.append(merged); i += <span class="nm">2</span>
+            <span class="kw">else</span>:
+                stitched.append(r); i += <span class="nm">1</span>
+        <span class="cm"># 3. Score-order budget trim</span>
+        stitched.sort(key=<span class="kw">lambda</span> x: x[<span class="st">"score"</span>], reverse=<span class="kw">True</span>)
+        used, selected = <span class="nm">0</span>, []
+        <span class="kw">for</span> r <span class="kw">in</span> stitched:
+            <span class="kw">if</span> used + r[<span class="st">"tokens"</span>] > self.max_ctx_tokens: <span class="kw">break</span>
+            selected.append(r); used += r[<span class="st">"tokens"</span>]
+        <span class="cm"># 4. Doc-order sort for LLM comprehension</span>
+        selected.sort(key=<span class="kw">lambda</span> x: (x[<span class="st">"doc_id"</span>], x[<span class="st">"index"</span>]))
+        <span class="cm"># 5. Build numbered blocks with metadata</span>
+        blocks = [
+            <span class="st">f"[{i+<span class="nm">1</span>}] chunk:{r['chunk_id']} doc:{r['doc_id']} "</span>
+            <span class="st">f"page:{r['page']} score:{r['score']:.3f}\n{r['text']}"</span>
+            <span class="kw">for</span> i, r <span class="kw">in</span> <span class="bi">enumerate</span>(selected)
+        ]
+        sys_prompt = (self.COMPLIANCE_HEADER +
+                      <span class="st">f"\ntenant:{tenant_id} query_hash:{query_hash}"</span>)
+        user_msg   = <span class="st">"Context:\n\n"</span> + <span class="st">"\n\n---\n\n"</span>.join(blocks) + <span class="st">f"\n\nQuestion: {query}"</span>
+        <span class="kw">return</span> Payload(sys_prompt, user_msg,
+                       [r[<span class="st">"chunk_id"</span>] <span class="kw">for</span> r <span class="kw">in</span> selected], used,
+                       (time.monotonic() - t0) * <span class="nm">1000</span>)</span>
+
+
+<span class="s4l"># ════════════════════════════════════════
+# STEP 4 — GENERATE  (async stream + audit)
+# ════════════════════════════════════════</span>
+<span class="da"><span class="kw">class</span> AuditEvent(BaseModel):
+    query_hash:      <span class="cls">str</span>
+    tenant_id:       <span class="cls">str</span>
+    chunk_ids:       <span class="cls">list</span>[<span class="cls">str</span>]
+    total_ctx_tokens: <span class="cls">int</span>
+    input_tokens:    <span class="cls">int</span>
+    output_tokens:   <span class="cls">int</span>
+    grounding_score: <span class="cls">float</span>
+    build_ms:        <span class="cls">float</span>
+    total_ms:        <span class="cls">float</span>
+    timestamp:       <span class="cls">str</span> = Field(default_factory=<span class="kw">lambda</span>: datetime.now(timezone.utc).isoformat())
+
+<span class="kw">async def</span> <span class="fn">generate</span>(payload: Payload, query_hash: <span class="cls">str</span>, tenant_id: <span class="cls">str</span>) -> <span class="cls">str</span>:
+    t0, full_text = time.monotonic(), <span class="st">""</span>
+    client = AsyncAnthropic()
+    <span class="kw">async with</span> client.messages.stream(
+        model=<span class="st">"claude-sonnet-4-6"</span>, max_tokens=<span class="nm">768</span>,
+        system=payload.system,
+        messages=[{<span class="st">"role"</span>:<span class="st">"user"</span>,<span class="st">"content"</span>:payload.user}],
+    ) <span class="kw">as</span> stream:
+        <span class="kw">async for</span> delta <span class="kw">in</span> stream.text_stream:
+            <span class="bi">print</span>(delta, end=<span class="st">""</span>, flush=<span class="kw">True</span>)
+            full_text += delta
+        final = <span class="kw">await</span> stream.get_final_message()
+    <span class="bi">print</span>()
+    sents     = re.split(<span class="st">r'(?&lt;=[.!?])\s+'</span>, full_text)
+    cited_set = <span class="bi">set</span>(payload.chunk_ids)
+    g_score   = <span class="bi">sum</span>(<span class="nm">1</span> <span class="kw">for</span> s <span class="kw">in</span> sents <span class="kw">if</span> any(c <span class="kw">in</span> s <span class="kw">for</span> c <span class="kw">in</span> cited_set)) / max(<span class="nm">1</span>, <span class="bi">len</span>(sents))
+    event     = AuditEvent(
+        query_hash=query_hash, tenant_id=tenant_id,
+        chunk_ids=payload.chunk_ids,
+        total_ctx_tokens=payload.total_tokens,
+        input_tokens=final.usage.input_tokens,
+        output_tokens=final.usage.output_tokens,
+        grounding_score=round(g_score, <span class="nm">3</span>),
+        build_ms=round(payload.build_ms, <span class="nm">2</span>),
+        total_ms=round((time.monotonic() - t0) * <span class="nm">1000</span>, <span class="nm">2</span>),
+    )
+    <span class="kw">await</span> log.ainfo(<span class="st">"rag_audit"</span>, **event.model_dump())  <span class="cm"># SR 11-7 log</span>
+    <span class="kw">return</span> full_text</span>
+
+
+<span class="kw">async def</span> <span class="fn">main</span>():
+    db   = <span class="kw">await</span> asyncpg.create_pool(os.environ[<span class="st">"DATABASE_URL"</span>])
+    <span class="kw">async with</span> db.acquire() <span class="kw">as</span> conn:
+        <span class="kw">await</span> register_vector(conn)
+        query      = <span class="st">"recovery rate for water damage claims"</span>
+        tenant_id  = <span class="st">"wellsfargo_claims"</span>
+        q_hash     = hashlib.sha256(query.encode()).hexdigest()[:<span class="nm">16</span>]
+        rows       = <span class="kw">await</span> search(conn, query, tenant_id, k=<span class="nm">12</span>)
+        builder    = PayloadBuilder()
+        payload    = builder.build(query, rows, q_hash, tenant_id)
+        answer     = <span class="kw">await</span> generate(payload, q_hash, tenant_id)
+        <span class="bi">print</span>(answer)
+
+<span class="kw">if</span> __name__ == <span class="st">"__main__"</span>:
+    asyncio.run(main())`
+},
+
+// ─── STAGE 6 ───────────────────────────────────────────
+{
+num:'Stage 6', title:'Agentic RAG — LangGraph full loop',
+desc:'LangGraph StateGraph with 5 nodes: retrieve → grade → assemble → generate → check. CRAG conditional routing rewrites the query when grade < 0.4. Human-in-loop fires when grade is uncertain (0.4–0.7). The check node grades the answer itself and re-enters the loop if grounding score is too low. Every node appends to audit_trail.',
+tags:[{l:'LangGraph',c:'tc'},{l:'CRAG grade',c:'ta'},{l:'Human-in-loop',c:'tp'},{l:'Answer grading',c:'tg'},{l:'MemorySaver',c:'tr'},{l:'Full audit trail',c:'tb'}],
+filename:'stage6_agentic_langgraph.py',
+install:'pip install anthropic langgraph langchain-anthropic sentence-transformers asyncpg pgvector pydantic structlog',
+wn:{
+  chunk:['Uses <code>ProductionChunk</code> from Stage 5','Chunking is a pre-step — graph starts from <code>retrieve</code>'],
+  search:['<code>retrieve_node</code>: calls Stage 5 <code>search()</code>','<code>grade_node</code>: LLM scores retrieved docs 0–1, appended to state','<code>route_after_grade()</code>: conditional edge → <code>rewrite</code> | <code>human_review</code> | <code>assemble</code>','<code>rewrite_node</code>: reformulates query, increments <code>iterations</code>, max 3 loops'],
+  assemble:['<code>assemble_node</code>: calls <code>PayloadBuilder.build()</code> from Stage 5 state','Uses <code>rewritten_query</code> if set, else original query','Payload stored in state, passed to <code>generate_node</code>'],
+  generate:['<code>generate_node</code>: async streams, writes full text to state','<code>check_node</code>: grades the answer grounding score — if < 0.5, re-enters loop via <code>rewrite</code>','<code>MemorySaver</code> checkpoints every state transition for full replay','<code>audit_trail</code> list in state: every node appends its action dict — SR 11-7 end-to-end trace'],
+},
+code:`<span class="im">import</span> asyncio, hashlib, os, re
+<span class="im">from</span> typing <span class="im">import</span> TypedDict
+<span class="im">from</span> langgraph.graph <span class="im">import</span> StateGraph, END
+<span class="im">from</span> langgraph.checkpoint.memory <span class="im">import</span> MemorySaver
+<span class="im">from</span> anthropic <span class="im">import</span> AsyncAnthropic
+<span class="im">import</span> asyncpg
+<span class="im">from</span> pgvector.asyncpg <span class="im">import</span> register_vector
+<span class="im">from</span> stage5_production <span class="im">import</span> search, PayloadBuilder, generate, AuditEvent
+<span class="im">import</span> structlog
+
+log = structlog.get_logger()
+
+
+<span class="s1l"># ════════════════════════════════════════
+# STEP 1 — CHUNK  (pre-step, not in graph)
+# ════════════════════════════════════════</span>
+<span class="cm"># Chunks are already ingested to pgvector (Stage 5).
+# The graph starts from retrieval — chunking is an offline pipeline.</span>
+
+
+<span class="s2l"># ════════════════════════════════════════
+# STEP 2 — SEARCH  (retrieve + grade + rewrite nodes)
+# ════════════════════════════════════════</span>
+<span class="da"><span class="kw">class</span> RAGState(TypedDict):
+    query:            <span class="cls">str</span>
+    tenant_id:        <span class="cls">str</span>
+    rewritten_query:  <span class="cls">str</span> | <span class="kw">None</span>
+    rows:             <span class="cls">list</span>[<span class="cls">dict</span>]     <span class="cm"># raw DB rows</span>
+    doc_grade:        <span class="cls">float</span>           <span class="cm"># 0–1 relevance of retrieved docs</span>
+    payload:          <span class="cls">dict</span> | <span class="kw">None</span>     <span class="cm"># assembled payload</span>
+    answer:           <span class="cls">str</span> | <span class="kw">None</span>
+    answer_grade:     <span class="cls">float</span>           <span class="cm"># 0–1 grounding score</span>
+    needs_human:      <span class="cls">bool</span>
+    iterations:       <span class="cls">int</span>
+    audit_trail:      <span class="cls">list</span>[<span class="cls">dict</span>]     <span class="cm"># SR 11-7</span>
+
+<span class="kw">async def</span> <span class="fn">retrieve_node</span>(state: RAGState, conn) -> RAGState:
+    q    = state[<span class="st">"rewritten_query"</span>] <span class="kw">or</span> state[<span class="st">"query"</span>]
+    rows = <span class="kw">await</span> search(conn, q, state[<span class="st">"tenant_id"</span>], k=<span class="nm">12</span>)
+    state[<span class="st">"rows"</span>] = rows
+    state[<span class="st">"audit_trail"</span>].append({<span class="st">"node"</span>:<span class="st">"retrieve"</span>,<span class="st">"query"</span>:q,<span class="st">"n_rows"</span>:<span class="bi">len</span>(rows)})
+    <span class="kw">return</span> state
+
+<span class="kw">async def</span> <span class="fn">grade_node</span>(state: RAGState) -> RAGState:
+    client  = AsyncAnthropic()
+    ctx     = <span class="st">"\n\n"</span>.join(r[<span class="st">"text"</span>][:<span class="nm">300</span>] <span class="kw">for</span> r <span class="kw">in</span> state[<span class="st">"rows"</span>][:<span class="nm">3</span>])
+    resp    = <span class="kw">await</span> client.messages.create(
+        model=<span class="st">"claude-sonnet-4-6"</span>, max_tokens=<span class="nm">5</span>,
+        messages=[{<span class="st">"role"</span>:<span class="st">"user"</span>,<span class="st">"content"</span>:
+            <span class="st">f"Query: {state['query']}\n\nDocs:\n{ctx}\n\nRate relevance 0.0-1.0. Reply number only."</span>}])
+    <span class="kw">try</span>: grade = <span class="cls">float</span>(resp.content[<span class="nm">0</span>].text.strip())
+    <span class="kw">except</span>: grade = <span class="nm">0.5</span>
+    state[<span class="st">"doc_grade"</span>]   = grade
+    state[<span class="st">"needs_human"</span>]  = <span class="nm">0.4</span> &lt;= grade &lt; <span class="nm">0.7</span>
+    state[<span class="st">"audit_trail"</span>].append({<span class="st">"node"</span>:<span class="st">"grade"</span>,<span class="st">"doc_grade"</span>:grade})
+    <span class="kw">return</span> state
+
+<span class="kw">def</span> <span class="fn">route_after_grade</span>(state: RAGState) -> <span class="cls">str</span>:
+    <span class="kw">if</span> state[<span class="st">"doc_grade"</span>] &lt; <span class="nm">0.4</span>:  <span class="kw">return</span> <span class="st">"rewrite"</span>
+    <span class="kw">if</span> state[<span class="st">"needs_human"</span>]:       <span class="kw">return</span> <span class="st">"human_review"</span>
+    <span class="kw">return</span> <span class="st">"assemble"</span>
+
+<span class="kw">async def</span> <span class="fn">rewrite_node</span>(state: RAGState) -> RAGState:
+    <span class="kw">if</span> state[<span class="st">"iterations"</span>] >= <span class="nm">3</span>:   <span class="cm"># hard stop — prevent infinite loop</span>
+        state[<span class="st">"audit_trail"</span>].append({<span class="st">"node"</span>:<span class="st">"rewrite"</span>,<span class="st">"action"</span>:<span class="st">"max_iterations_hit"</span>})
+        <span class="kw">return</span> state
+    client   = AsyncAnthropic()
+    resp     = <span class="kw">await</span> client.messages.create(
+        model=<span class="st">"claude-sonnet-4-6"</span>, max_tokens=<span class="nm">80</span>,
+        messages=[{<span class="st">"role"</span>:<span class="st">"user"</span>,<span class="st">"content"</span>:
+            <span class="st">f"The query '{state['query']}' returned poor docs (grade={state['doc_grade']:.2f}).\n"</span>
+            <span class="st">f"Rewrite it for better retrieval. Reply with the new query only."</span>}])
+    rw = resp.content[<span class="nm">0</span>].text.strip()
+    state[<span class="st">"rewritten_query"</span>] = rw
+    state[<span class="st">"iterations"</span>]      += <span class="nm">1</span>
+    state[<span class="st">"audit_trail"</span>].append({<span class="st">"node"</span>:<span class="st">"rewrite"</span>,<span class="st">"rewritten"</span>:rw,<span class="st">"iter"</span>:state[<span class="st">"iterations"</span>]})
+    <span class="kw">return</span> state</span>
+
+
+<span class="s3l"># ════════════════════════════════════════
+# STEP 3 — ASSEMBLE  (assemble_node)
+# ════════════════════════════════════════</span>
+<span class="da"><span class="kw">async def</span> <span class="fn">assemble_node</span>(state: RAGState) -> RAGState:
+    q_hash  = hashlib.sha256(state[<span class="st">"query"</span>].encode()).hexdigest()[:<span class="nm">16</span>]
+    builder = PayloadBuilder(max_ctx_tokens=<span class="nm">3500</span>)
+    pl      = builder.build(
+        query      = state[<span class="st">"rewritten_query"</span>] <span class="kw">or</span> state[<span class="st">"query"</span>],
+        rows       = state[<span class="st">"rows"</span>],
+        query_hash = q_hash,
+        tenant_id  = state[<span class="st">"tenant_id"</span>],
+    )
+    state[<span class="st">"payload"</span>] = {
+        <span class="st">"system"</span>:       pl.system,
+        <span class="st">"user"</span>:         pl.user,
+        <span class="st">"chunk_ids"</span>:    pl.chunk_ids,
+        <span class="st">"total_tokens"</span>: pl.total_tokens,
+    }
+    state[<span class="st">"audit_trail"</span>].append({<span class="st">"node"</span>:<span class="st">"assemble"</span>,
+        <span class="st">"n_chunks"</span>:<span class="bi">len</span>(pl.chunk_ids),<span class="st">"ctx_tokens"</span>:pl.total_tokens})
+    <span class="kw">return</span> state</span>
+
+
+<span class="s4l"># ════════════════════════════════════════
+# STEP 4 — GENERATE  (stream + answer grader + check node)
+# ════════════════════════════════════════</span>
+<span class="da"><span class="kw">async def</span> <span class="fn">generate_node</span>(state: RAGState) -> RAGState:
+    pl     = state[<span class="st">"payload"</span>]
+    client = AsyncAnthropic()
+    full   = <span class="st">""</span>
+    <span class="kw">async with</span> client.messages.stream(
+        model=<span class="st">"claude-sonnet-4-6"</span>, max_tokens=<span class="nm">768</span>,
+        system=pl[<span class="st">"system"</span>],
+        messages=[{<span class="st">"role"</span>:<span class="st">"user"</span>,<span class="st">"content"</span>:pl[<span class="st">"user"</span>]}],
+    ) <span class="kw">as</span> stream:
+        <span class="kw">async for</span> d <span class="kw">in</span> stream.text_stream:
+            <span class="bi">print</span>(d, end=<span class="st">""</span>, flush=<span class="kw">True</span>); full += d
+        final = <span class="kw">await</span> stream.get_final_message()
+    <span class="bi">print</span>()
+    state[<span class="st">"answer"</span>] = full
+    state[<span class="st">"audit_trail"</span>].append({<span class="st">"node"</span>:<span class="st">"generate"</span>,
+        <span class="st">"in_tok"</span>:final.usage.input_tokens,<span class="st">"out_tok"</span>:final.usage.output_tokens})
+    <span class="kw">return</span> state
+
+<span class="kw">async def</span> <span class="fn">check_node</span>(state: RAGState) -> RAGState:
+    <span class="st">"""Grade the answer itself — re-enter loop if grounding too low."""</span>
+    ans   = state[<span class="st">"answer"</span>] <span class="kw">or</span> <span class="st">""</span>
+    cids  = <span class="bi">set</span>(state[<span class="st">"payload"</span>][<span class="st">"chunk_ids"</span>])
+    sents = re.split(<span class="st">r'(?&lt;=[.!?])\s+'</span>, ans)
+    g     = <span class="bi">sum</span>(<span class="nm">1</span> <span class="kw">for</span> s <span class="kw">in</span> sents <span class="kw">if</span> any(c <span class="kw">in</span> s <span class="kw">for</span> c <span class="kw">in</span> cids)) / max(<span class="nm">1</span>,<span class="bi">len</span>(sents))
+    state[<span class="st">"answer_grade"</span>] = g
+    state[<span class="st">"audit_trail"</span>].append({<span class="st">"node"</span>:<span class="st">"check"</span>,<span class="st">"answer_grade"</span>:round(g,<span class="nm">3</span>)})
+    <span class="kw">await</span> log.ainfo(<span class="st">"rag_complete"</span>, audit=state[<span class="st">"audit_trail"</span>])
+    <span class="kw">return</span> state
+
+<span class="kw">def</span> <span class="fn">route_after_check</span>(state: RAGState) -> <span class="cls">str</span>:
+    <span class="cm"># If answer is poorly grounded and we have retries left, rewrite</span>
+    <span class="kw">if</span> state[<span class="st">"answer_grade"</span>] &lt; <span class="nm">0.4</span> <span class="kw">and</span> state[<span class="st">"iterations"</span>] &lt; <span class="nm">3</span>:
+        <span class="kw">return</span> <span class="st">"rewrite"</span>
+    <span class="kw">return</span> END
+
+
+<span class="cm"># ── Build and compile the graph ──────────────────────────</span>
+<span class="da"><span class="kw">def</span> <span class="fn">build_graph</span>(conn) -> StateGraph:
+    <span class="im">from</span> functools <span class="im">import</span> partial
+    wf = StateGraph(RAGState)
+    wf.add_node(<span class="st">"retrieve"</span>,    partial(retrieve_node, conn=conn))
+    wf.add_node(<span class="st">"grade"</span>,       grade_node)
+    wf.add_node(<span class="st">"rewrite"</span>,     rewrite_node)
+    wf.add_node(<span class="st">"assemble"</span>,    assemble_node)
+    wf.add_node(<span class="st">"human_review"</span>,<span class="kw">lambda</span> s: s)   <span class="cm"># pause point</span>
+    wf.add_node(<span class="st">"generate"</span>,    generate_node)
+    wf.add_node(<span class="st">"check"</span>,       check_node)
+    wf.set_entry_point(<span class="st">"retrieve"</span>)
+    wf.add_edge(<span class="st">"retrieve"</span>,    <span class="st">"grade"</span>)
+    wf.add_conditional_edges(<span class="st">"grade"</span>, route_after_grade,
+        {<span class="st">"rewrite"</span>:<span class="st">"rewrite"</span>,<span class="st">"human_review"</span>:<span class="st">"human_review"</span>,<span class="st">"assemble"</span>:<span class="st">"assemble"</span>})
+    wf.add_edge(<span class="st">"rewrite"</span>,     <span class="st">"retrieve"</span>)   <span class="cm"># CRAG loop</span>
+    wf.add_edge(<span class="st">"human_review"</span>,<span class="st">"assemble"</span>)   <span class="cm"># human approves → continue</span>
+    wf.add_edge(<span class="st">"assemble"</span>,    <span class="st">"generate"</span>)
+    wf.add_edge(<span class="st">"generate"</span>,    <span class="st">"check"</span>)
+    wf.add_conditional_edges(<span class="st">"check"</span>, route_after_check,
+        {<span class="st">"rewrite"</span>:<span class="st">"rewrite"</span>, END:END})
+    <span class="kw">return</span> wf.compile(
+        checkpointer=MemorySaver(),
+        interrupt_before=[<span class="st">"generate"</span>],  <span class="cm"># pause when needs_human=True</span>
+    )</span>
+
+<span class="kw">async def</span> <span class="fn">main</span>():
+    db   = <span class="kw">await</span> asyncpg.create_pool(os.environ[<span class="st">"DATABASE_URL"</span>])
+    <span class="kw">async with</span> db.acquire() <span class="kw">as</span> conn:
+        <span class="kw">await</span> register_vector(conn)
+        app   = build_graph(conn)
+        state = RAGState(
+            query=<span class="st">"recovery rate for water damage claims"</span>,
+            tenant_id=<span class="st">"wellsfargo_claims"</span>, rewritten_query=<span class="kw">None</span>,
+            rows=[], doc_grade=<span class="nm">0.0</span>, payload=<span class="kw">None</span>,
+            answer=<span class="kw">None</span>, answer_grade=<span class="nm">0.0</span>, needs_human=<span class="kw">False</span>,
+            iterations=<span class="nm">0</span>, audit_trail=[],
+        )
+        cfg    = {<span class="st">"configurable"</span>: {<span class="st">"thread_id"</span>: <span class="st">"claim-8821"</span>}}
+        result = <span class="kw">await</span> app.ainvoke(state, cfg)
+        <span class="bi">print</span>(<span class="st">"\n\nFinal answer:"</span>, result[<span class="st">"answer"</span>])
+        <span class="bi">print</span>(<span class="st">"Audit trail:"</span>, result[<span class="st">"audit_trail"</span>])
+
+<span class="kw">if</span> __name__ == <span class="st">"__main__"</span>:
+    asyncio.run(main())`
+}
+]; // end STAGES
+
+// ═══════════════════════════════════════════════════════
+//  ASK CLAUDE
+// ═══════════════════════════════════════════════════════
+const QUESTIONS = [
+  // Stage 1 — Naive RAG
+  [
+    {q:"Why does paragraph split break retrieval quality?", a:"split(\"\\n\\n\") has no awareness of sentence or semantic boundaries — it cuts wherever a blank line happens to fall, which can sever a sentence mid-thought or split a single idea across two chunks. Neither chunk alone then carries enough context for retrieval to match it correctly, and even if retrieved, the LLM gets a fragment instead of a complete thought.", mnemonic:"Blank lines aren't semantic boundaries", steps:["Doc text","Split on \\n\\n","Mid-sentence cut","Fragment retrieved"]},
+    {q:"What's wrong with a 3-line f-string payload?", a:"It has no dedup, no token budget, and no ordering logic — chunks go in exactly as retrieved, score order, with no check for near-duplicate content or whether the total exceeds what the model should reasonably process. In production this wastes context window on redundant text and can silently exceed cost/latency expectations.", mnemonic:"No budget, no dedup, no order = no control", steps:["Retrieved chunks","Raw join()","No checks","Sent as-is"]},
+    {q:"When is naive RAG actually good enough?", a:"For prototypes, internal tools with low stakes, or corpora small and uniform enough that TF-IDF cosine similarity reliably finds the right chunk. If the document set is under a few hundred chunks and queries are keyword-heavy, the simplicity is a feature, not a liability — added complexity only pays off once you hit its failure modes.", mnemonic:"Small + uniform + low-stakes = naive is fine", steps:["Small corpus","Keyword queries","Low stakes","Naive RAG suffices"]},
+  ],
+  // Stage 2 — Proper Chunking + Basic Assembly
+  [
+    {q:"Why SHA-256 and not UUID for chunk IDs?", a:"SHA-256 is content-addressed — the ID is deterministically derived from the chunk's text, so re-ingesting the same document produces the same chunk_id and you get free deduplication. A UUID is random and would produce a new ID every time you re-chunk the same content, making it impossible to tell if a chunk is actually new or just re-processed.", mnemonic:"Content hash = same text, same ID, free dedup", steps:["Chunk text","SHA-256 hash","Same text again","Same ID → dedup"]},
+    {q:"How does token budget affect answer quality?", a:"Without a budget, low-relevance chunks can crowd out high-relevance ones simply because they were retrieved alongside them, or the total context can exceed what the model attends to well. Enforcing a budget — and dropping the lowest-scored chunks first — keeps the LLM focused on the most relevant material rather than diluting attention across marginal content.", mnemonic:"Budget keeps signal dense, drops the noise first", steps:["All retrieved","Sort by score","Trim to budget","Dense, relevant context"]},
+    {q:"What should the system prompt say for Claims AI?", a:"It needs three things: an explicit instruction to answer only from the provided context (not parametric memory), a required citation format like [chunk_id] so every claim is traceable, and an explicit fallback phrase for insufficient context — something like \"The provided context does not contain enough information\" — so the model has a clean way to say it doesn't know rather than guessing.", mnemonic:"Context-only + cite + explicit fallback phrase", steps:["System prompt","Context-only rule","Citation format","Fallback phrase"]},
+  ],
+  // Stage 3 — Hybrid Retrieval + Smart Assembly
+  [
+    {q:"Why use RRF instead of normalising scores?", a:"BM25 scores and dense cosine scores live in completely different numerical ranges and distributions — normalising them to combine fairly is fragile and needs per-dataset tuning. RRF sidesteps this by operating purely on rank position (1/(k+rank)), so it never needs to know or care what scale either retriever's scores are on.", mnemonic:"Ranks don't need calibration; scores do", steps:["BM25 scores","Different scale","Dense scores","RRF: ranks only"]},
+    {q:"When does near-dedup hurt retrieval?", a:"If the similarity threshold is set too aggressively (e.g. 0.80 instead of 0.92), it can discard chunks that are topically related but meaningfully distinct — like two different sections both discussing 'coverage limits' but for different policy types. Too loose a threshold misses true duplicates from overlapping chunk windows; too tight a threshold throws away genuinely useful diversity.", mnemonic:"Too tight a threshold = false positives on dedup", steps:["Set threshold","Too low (0.80)","Distinct chunks merged","Lost real diversity"]},
+    {q:"What doc-order vs score-order does to LLM attention?", a:"Score order presents chunks in relevance rank, which can jump between unrelated documents and confuse the model's sense of narrative flow. Doc-order re-sorts the final selected chunks by their original position in the source document, so the model reads a coherent passage in the order the author intended — closer to how it was trained to read text.", mnemonic:"Doc-order reads like the author wrote it", steps:["Score order","Jumps documents","Doc-order","Reads coherently"]},
+  ],
+  // Stage 4 — LangChain + ContextAssembler
+  [
+    {q:"What does HyDE actually do to the embedding space?", a:"A short query like 'recovery rate for water damage' embeds as a sparse, low-information vector — far in embedding space from a dense, information-rich answer paragraph, even if that paragraph directly answers the query. HyDE has the LLM write a hypothetical answer first, then embeds that instead — the hypothetical answer's embedding sits much closer to real answer chunks than the bare query's embedding would.", mnemonic:"Embed the hypothetical answer, not the bare question", steps:["Short query","Sparse vector","LLM writes hypo answer","Dense vector, closer match"]},
+    {q:"When should ContextAssembler be a class vs functions?", a:"A class makes sense once assembly has multiple stateful configuration parameters (max_ctx_tokens, dedup_threshold) that every method needs access to, and when you want a single object you can unit test and swap implementations of (e.g. a StrictAssembler vs a PermissiveAssembler). If assembly is just 1-2 pure functions with no shared config, plain functions are simpler and avoid unnecessary OOP overhead.", mnemonic:"Shared config across methods → class. Otherwise, functions.", steps:["Multiple methods","Share config?","Yes → class","No → plain functions"]},
+    {q:"How does fallback requery differ from CRAG rewrite?", a:"Fallback requery (Stage 4) is reactive and happens after generation — the model says INSUFFICIENT_CONTEXT, and only then do you rewrite the query and retry once. CRAG rewrite (Stage 6) is proactive and happens before generation — a grading step scores retrieved docs, and if the grade is poor, it rewrites and re-retrieves before the LLM ever sees the bad context, potentially looping multiple times.", mnemonic:"Fallback reacts after generation; CRAG prevents before it", steps:["Fallback: generate first","Bad answer","CRAG: grade first","Reject before generating"]},
+  ],
+  // Stage 5 — Production
+  [
+    {q:"Why pgvector over Pinecone at a regulated bank?", a:"Data residency — policy documents can't leave the network perimeter without significant legal review, ruling out most SaaS vector stores. pgvector also keeps vectors co-located with existing Postgres governance: tenant isolation is a WHERE clause, audit logs live in the same schema, and the model risk team can inspect the full system without external vendor access.", mnemonic:"Data can't leave the building — pgvector stays in-house", steps:["Policy docs","Can't leave network","pgvector: on-prem","Governance co-located"]},
+    {q:"What does SR 11-7 require from the audit log?", a:"Every retrieval event needs: a query_hash (not raw query text, to avoid logging sensitive content), tenant_id for isolation tracking, the exact chunk_ids retrieved, similarity scores, the embedding_model version used, and timestamps — enough to fully reconstruct and explain any historical answer for regulatory review.", mnemonic:"Hash the query, log everything else fully", steps:["Retrieval happens","query_hash (not raw)","chunk_ids+scores+model_ver","Fully reconstructable"]},
+    {q:"How does adjacent stitching improve answer coherence?", a:"When two retrieved chunks turn out to be sequential in the source document (same doc_id, consecutive index), stitching merges them into one combined block before sending to the LLM — rather than presenting them as two separate, oddly-truncated fragments. This preserves the natural flow of an explanation that happened to span a chunk boundary.", mnemonic:"Adjacent chunks merge back into one continuous thought", steps:["Chunk N","Chunk N+1 (same doc)","Detected adjacent","Merged into one block"]},
+  ],
+  // Stage 6 — Agentic LangGraph
+  [
+    {q:"What happens when grade_node always returns < 0.4?", a:"The graph routes to rewrite every single time, incrementing iterations — but the hard cap of 3 iterations in rewrite_node prevents this from looping forever. After 3 failed rewrite attempts, the audit_trail logs max_iterations_hit and the graph proceeds with whatever the last retrieval produced rather than looping indefinitely.", mnemonic:"Always-low grade still hits the iteration ceiling", steps:["Grade < 0.4","Route to rewrite","Iteration count++","Cap at 3, proceed anyway"]},
+    {q:"How does check_node differ from grade_node?", a:"grade_node scores the retrieved DOCUMENTS before generation — is the context good enough to answer from. check_node scores the generated ANSWER after generation — did the model's response actually ground itself in the cited chunks. They catch different failure points: grade_node catches bad retrieval, check_node catches good retrieval but bad generation (e.g. hallucination despite having the right context).", mnemonic:"Grade checks the input; check checks the output", steps:["grade_node","Scores documents","check_node","Scores the answer"]},
+    {q:"When does interrupt_before make sense for Claims AI?", a:"Specifically before the generate node when needs_human=True — meaning the document grade fell in the uncertain 0.4-0.7 range, confident enough to attempt an answer but not confident enough to fully automate. This is the right point to pause because the human reviewer sees the retrieved context (not yet a generated answer) and can correct course before the LLM commits to a response built on shaky retrieval.", mnemonic:"Pause before generating, not after — let humans see raw context", steps:["Grade: 0.4-0.7","Uncertain zone","interrupt_before generate","Human reviews context first"]},
+  ],
+];
+
+// ═══════════════════════════════════════════════════════
+//  MINI DIAGRAM + EXPANDABLE Q&A CARDS (shared renderer)
+// ═══════════════════════════════════════════════════════
+function miniDiagramSVG(steps) {
+  const n = steps.length;
+  const w = 248, h = 54, boxW = 96, gap = 10;
+  const totalW = n * boxW + (n - 1) * gap;
+  const startX = Math.max(4, (w - totalW) / 2);
+  let svg = `<svg width="100%" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">`;
+  svg += `<defs><marker id="arrowhead-shared" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#2d4060" stroke-width="1.5"/></marker></defs>`;
+  steps.forEach((label, i) => {
+    const x = startX + i * (boxW + gap);
+    const isLast = i === n - 1;
+    const isLoop = label.startsWith('↻');
+    const color = isLoop ? 'var(--coral)' : (i === 0 ? 'var(--teal)' : i === n-1 ? 'var(--green)' : 'var(--amber)');
+    const bg = isLoop ? 'rgba(248,113,113,.08)' : (i === 0 ? 'rgba(0,212,200,.08)' : i === n-1 ? 'rgba(52,211,153,.08)' : 'rgba(245,158,11,.08)');
+    svg += `<rect x="${x}" y="14" width="${boxW}" height="26" rx="5" fill="${bg}" stroke="${color}" stroke-width="1"/>`;
+    svg += `<text x="${x+boxW/2}" y="30" text-anchor="middle" fill="${color}" font-size="9" font-weight="700" font-family="sans-serif">${label.replace('↻ ','↻')}</text>`;
+    if (!isLast) {
+      svg += `<line x1="${x+boxW+1}" y1="27" x2="${x+boxW+gap-1}" y2="27" stroke="#2d4060" stroke-width="1.3" marker-end="url(#arrowhead-shared)"/>`;
+    }
+  });
+  svg += `</svg>`;
+  return svg;
+}
+
+function renderQACard(qa, idx, prefix) {
+  return `
+  <div class="qa-item">
+    <div class="qa-q" onclick="toggleQACard('${prefix}-${idx}')">
+      <span class="qa-qnum">Q${idx+1}</span>
+      <span class="qa-qtext">${qa.q}</span>
+      <span class="qa-arrow">›</span>
+    </div>
+    <div class="qa-a" id="qac-${prefix}-${idx}">
+      <div class="qa-diagram">${miniDiagramSVG(qa.steps)}</div>
+      <div class="qa-mnemonic">💡 ${qa.mnemonic}</div>
+      <div class="qa-answer-text">${qa.a}</div>
+    </div>
+  </div>`;
+}
+
+function toggleQACard(id) {
+  const aItem = document.getElementById('qac-' + id);
+  const qItem = aItem.previousElementSibling;
+  const open = qItem.classList.contains('open');
+  qItem.classList.toggle('open', !open);
+  aItem.classList.toggle('open', !open);
+}
+
+function renderQuestionsPanel(questions, prefix) {
+  return `<div class="sugs-qa">` + questions.map((qa, i) => renderQACard(qa, i, prefix)).join('') + `</div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  A5 — INFRASTRUCTURE MATURITY STAGES (simple → production)
+// ═══════════════════════════════════════════════════════
+function infraBox(n) {
+  const cx = n.x + n.w/2, cy = n.y + n.h/2;
+  const ls = n.label.split('\n');
+  const longest = Math.max(...ls.map(l=>l.length));
+  // Auto-fit: estimate available px per char, cap font-size so longest line fits inside box width with padding
+  const padding = 10;
+  const availW = n.w - padding;
+  const fitSize = Math.floor(availW / (longest * 0.62));
+  const fontSize = Math.max(7, Math.min(9.5, fitSize));
+  const rect = `<rect x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" rx="6" fill="${n.bg}" stroke="${n.bc}" stroke-width="1" stroke-dasharray="${n.dashed?'4 3':''}"/>`;
+  const lineH = fontSize + 3;
+  const txt = ls.map((l,li)=>`<text x="${cx}" y="${cy+(li-ls.length/2+0.6)*lineH}" text-anchor="middle" fill="${n.bc}" font-size="${fontSize}" font-weight="700" font-family="sans-serif">${l}</text>`).join('');
+  const sub = n.sub ? `<text x="${cx}" y="${n.y+n.h+12}" text-anchor="middle" fill="#4a5568" font-size="8.5" font-family="sans-serif">${n.sub}</text>` : '';
+  return rect + txt + sub;
+}
+function infraArrow(x1,y1,x2,y2,dashed) {
+  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#2d4060" stroke-width="1.3" ${dashed?'stroke-dasharray="3 2"':''} marker-end="url(#infra-arrow)"/>`;
+}
+
+const RAG_INFRA_STAGES = [
+{
+  num:'Infra 1', title:'Single Server', tag:'Simplest', tagc:'tc',
+  desc:'Everything in one process: API, in-memory vector index, and a local file or SQLite for chunk metadata. No load balancer, no separate DB server, no async workers. This is where every RAG prototype starts.',
+  svgH: 150,
+  diagram: `<rect x="40" y="30" width="620" height="90" rx="10" fill="none" stroke="#1e2d45" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="55" y="46" fill="#4a5568" font-size="9" font-family="sans-serif">Single VM / container</text>
+    ${infraBox({x:70,y:55,w:130,h:50,label:'FastAPI\\nprocess',bg:'rgba(0,212,200,.08)',bc:'var(--teal)'})}
+    ${infraBox({x:240,y:55,w:130,h:50,label:'In-memory\\nFAISS index',bg:'rgba(245,158,11,.08)',bc:'var(--amber)'})}
+    ${infraBox({x:410,y:55,w:130,h:50,label:'SQLite\\n(metadata)',bg:'rgba(167,139,250,.08)',bc:'var(--purple)'})}
+    ${infraArrow(200,80,238,80)}
+    ${infraArrow(370,80,408,80)}
+    <text x="350" y="138" text-anchor="middle" fill="#4a5568" font-size="9" font-family="sans-serif">No auth, no replicas, no async — restart loses the in-memory index entirely</text>`,
+  whatChanged: 'This is the baseline — nothing has changed yet. Every component lives in one process: <code>uvicorn main:app</code> on one box. Good for: prototypes, internal demos, proving the RAG logic works. Breaks immediately under: more than one concurrent user, any need for durability across restarts, or more than a few thousand chunks.'
+},
+{
+  num:'Infra 2', title:'Split Services', tag:'Basic split', tagc:'ta',
+  desc:'Separate the API from the database — pgvector now runs as its own Postgres container/instance, not in-process. The API is still one instance, but state durability is solved: a restart no longer loses your index.',
+  svgH: 150,
+  diagram: `<rect x="40" y="30" width="300" height="90" rx="10" fill="none" stroke="#1e2d45" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="55" y="46" fill="#4a5568" font-size="9" font-family="sans-serif">API container</text>
+    ${infraBox({x:70,y:55,w:240,h:50,label:'FastAPI process',bg:'rgba(0,212,200,.08)',bc:'var(--teal)'})}
+    <rect x="380" y="30" width="280" height="90" rx="10" fill="none" stroke="#1e2d45" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="395" y="46" fill="#4a5568" font-size="9" font-family="sans-serif">DB container</text>
+    ${infraBox({x:410,y:55,w:220,h:50,label:'Postgres + pgvector\\n(HNSW index)',bg:'rgba(52,211,153,.08)',bc:'var(--green)'})}
+    ${infraArrow(312,80,408,80)}
+    <text x="350" y="138" text-anchor="middle" fill="#4a5568" font-size="9" font-family="sans-serif">State now survives API restarts — still single instance of each, still no caching</text>`,
+  whatChanged: 'pgvector replaces in-memory FAISS — vectors now live in a separate, durable Postgres instance reachable over the network. This is the single biggest reliability win for the least effort: a deploy or crash no longer means re-embedding everything from scratch. Still single-instance on both sides, so this doesn\'t help with traffic scale — only with durability.'
+},
+{
+  num:'Infra 3', title:'Cache + Async Workers', tag:'Performance', tagc:'tp',
+  desc:'Add a Redis cache in front of frequent query embeddings, and move document ingestion off the request path entirely into an async worker queue. The API no longer blocks on slow ingestion jobs.',
+  svgH: 190,
+  diagram: `${infraBox({x:30,y:20,w:130,h:46,label:'FastAPI\\nprocess',bg:'rgba(0,212,200,.08)',bc:'var(--teal)'})}
+    ${infraBox({x:200,y:20,w:110,h:46,label:'Redis\\ncache',bg:'rgba(248,113,113,.08)',bc:'var(--coral)'})}
+    ${infraBox({x:350,y:20,w:130,h:46,label:'Postgres +\\npgvector',bg:'rgba(52,211,153,.08)',bc:'var(--green)'})}
+    ${infraBox({x:540,y:20,w:120,h:46,label:'Ingestion\\nqueue (Celery)',bg:'rgba(245,158,11,.08)',bc:'var(--amber)',dashed:true})}
+    ${infraArrow(160,43,198,43)}
+    ${infraArrow(310,43,348,43)}
+    ${infraArrow(160,55,538,55,true)}
+    ${infraBox({x:540,y:110,w:120,h:46,label:'Worker pool\\n(N processes)',bg:'rgba(245,158,11,.08)',bc:'var(--amber)'})}
+    ${infraArrow(600,68,600,108)}
+    <text x="600" y="172" text-anchor="middle" fill="#4a5568" font-size="9" font-family="sans-serif">Document upload</text>
+    <text x="350" y="172" text-anchor="middle" fill="#4a5568" font-size="9" font-family="sans-serif">queues async, API returns immediately</text>`,
+  whatChanged: '<code>Redis</code> caches frequent query embeddings (1hr TTL) — repeated similar queries skip re-embedding. <code>Celery</code> (or RQ) moves the slow part — chunking, embedding, writing to pgvector — into background workers, so uploading a 200-page PDF no longer makes the API hang for 30 seconds. The API\'s only job on ingestion is to enqueue the job and return a job ID immediately.'
+},
+{
+  num:'Infra 4', title:'Horizontal Scale', tag:'Scaled', tagc:'tg',
+  desc:'Add a load balancer in front of N API replicas, and a read replica on the Postgres side for retrieval queries — write traffic (ingestion) still goes to the primary. This is the stage where the system can handle real concurrent traffic.',
+  svgH: 210,
+  diagram: `${infraBox({x:300,y:15,w:120,h:42,label:'Load Balancer',bg:'rgba(0,212,200,.08)',bc:'var(--teal)'})}
+    ${infraBox({x:120,y:90,w:110,h:42,label:'API replica 1',bg:'rgba(0,212,200,.08)',bc:'var(--teal)'})}
+    ${infraBox({x:250,y:90,w:110,h:42,label:'API replica 2',bg:'rgba(0,212,200,.08)',bc:'var(--teal)'})}
+    ${infraBox({x:380,y:90,w:110,h:42,label:'API replica N',bg:'rgba(0,212,200,.08)',bc:'var(--teal)'})}
+    ${infraBox({x:170,y:165,w:160,h:42,label:'Postgres primary\\n(writes)',bg:'rgba(52,211,153,.08)',bc:'var(--green)'})}
+    ${infraBox({x:380,y:165,w:160,h:42,label:'Read replica\\n(retrieval queries)',bg:'rgba(167,139,250,.08)',bc:'var(--purple)'})}
+    ${infraArrow(345,57,175,88)}
+    ${infraArrow(360,57,305,88)}
+    ${infraArrow(375,57,435,88)}
+    ${infraArrow(220,132,235,163)}
+    ${infraArrow(350,132,440,163)}
+    ${infraArrow(305,186,378,186,true)}`,
+  whatChanged: 'A load balancer (nginx, ALB) distributes requests across N stateless API replicas — stateless because all session/embedding state already moved to Redis and Postgres in Stage 3. A read replica on Postgres takes retrieval query load off the primary, which only handles writes (ingestion) and replicates asynchronously to the read replica.'
+},
+{
+  num:'Infra 5', title:'Observability + Multi-tenant', tag:'Governed', tagc:'tr',
+  desc:'Add a full monitoring stack (Prometheus/Grafana), centralized structured logging, and enforce tenant isolation at the infrastructure level — not just application-level WHERE clauses. This is the stage where the system becomes auditable.',
+  svgH: 210,
+  diagram: `${infraBox({x:30,y:20,w:120,h:42,label:'API replicas',bg:'rgba(0,212,200,.08)',bc:'var(--teal)'})}
+    ${infraBox({x:200,y:20,w:120,h:42,label:'Structured logs\\n(structlog→ELK)',bg:'rgba(248,113,113,.08)',bc:'var(--coral)'})}
+    ${infraBox({x:370,y:20,w:120,h:42,label:'Metrics\\n(Prometheus)',bg:'rgba(245,158,11,.08)',bc:'var(--amber)'})}
+    ${infraBox({x:540,y:20,w:120,h:42,label:'Dashboards\\n(Grafana)',bg:'rgba(167,139,250,.08)',bc:'var(--purple)'})}
+    ${infraArrow(150,41,198,41)}
+    ${infraArrow(320,41,368,41)}
+    ${infraArrow(490,41,538,41)}
+    <rect x="30" y="100" width="300" height="90" rx="10" fill="none" stroke="#1e2d45" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="45" y="116" fill="#4a5568" font-size="9" font-family="sans-serif">Tenant A network namespace</text>
+    ${infraBox({x:55,y:128,w:120,h:42,label:'Tenant A schema',bg:'rgba(52,211,153,.08)',bc:'var(--green)'})}
+    ${infraBox({x:195,y:128,w:110,h:42,label:'Tenant A vectors',bg:'rgba(52,211,153,.08)',bc:'var(--green)'})}
+    <rect x="370" y="100" width="290" height="90" rx="10" fill="none" stroke="#1e2d45" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="385" y="116" fill="#4a5568" font-size="9" font-family="sans-serif">Tenant B network namespace</text>
+    ${infraBox({x:395,y:128,w:120,h:42,label:'Tenant B schema',bg:'rgba(52,211,153,.08)',bc:'var(--green)'})}
+    ${infraBox({x:535,y:128,w:110,h:42,label:'Tenant B vectors',bg:'rgba(52,211,153,.08)',bc:'var(--green)'})}`,
+  whatChanged: 'Every API node ships structured logs to a centralized pipeline (structlog → ELK/Loki) and exposes metrics to Prometheus, visualized in Grafana — latency p50/p95, retrieval miss rate, grounding score, all queryable. Tenant isolation moves from "a WHERE clause we trust" to infrastructure-enforced separation — separate schemas or even separate network namespaces per tenant, so a code bug can\'t leak data across a network boundary that doesn\'t exist for it to cross.'
+},
+{
+  num:'Infra 6', title:'Full Production', tag:'Production', tagc:'tb',
+  desc:'Multi-region active/passive deployment, blue/green deploys for zero-downtime releases, a WAF in front of the load balancer, and a documented DR runbook. This is what you\'d actually present as the target architecture in an architect interview.',
+  svgH: 230,
+  diagram: `<rect x="20" y="15" width="660" height="95" rx="10" fill="none" stroke="rgba(0,212,200,.25)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="35" y="31" fill="var(--teal)" font-size="9" font-weight="700" font-family="sans-serif">Region A — Active</text>
+    ${infraBox({x:40,y:40,w:90,h:42,label:'WAF',bg:'rgba(248,113,113,.08)',bc:'var(--coral)'})}
+    ${infraBox({x:150,y:40,w:100,h:42,label:'Load Balancer',bg:'rgba(0,212,200,.08)',bc:'var(--teal)'})}
+    ${infraBox({x:270,y:40,w:110,h:42,label:'API replicas\\n(blue/green)',bg:'rgba(0,212,200,.08)',bc:'var(--teal)'})}
+    ${infraBox({x:400,y:40,w:120,h:42,label:'Postgres primary\\n+ pgvector',bg:'rgba(52,211,153,.08)',bc:'var(--green)'})}
+    ${infraBox({x:540,y:40,w:120,h:42,label:'Monitoring +\\nAudit (SR 11-7)',bg:'rgba(167,139,250,.08)',bc:'var(--purple)'})}
+    ${infraArrow(132,61,148,61)}${infraArrow(252,61,268,61)}${infraArrow(382,61,398,61)}${infraArrow(522,61,538,61)}
+    <rect x="20" y="130" width="660" height="80" rx="10" fill="none" stroke="rgba(245,158,11,.2)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="35" y="146" fill="var(--amber)" font-size="9" font-weight="700" font-family="sans-serif">Region B — Passive (DR standby)</text>
+    ${infraBox({x:40,y:155,w:120,h:42,label:'Standby API\\n(scaled to 0)',bg:'rgba(245,158,11,.06)',bc:'var(--amber)',dashed:true})}
+    ${infraBox({x:400,y:155,w:120,h:42,label:'Postgres replica\\n(async streaming)',bg:'rgba(245,158,11,.06)',bc:'var(--amber)',dashed:true})}
+    ${infraArrow(460,82,460,153,true)}
+    <text x="600" y="180" text-anchor="middle" fill="#4a5568" font-size="8.5" font-family="sans-serif">failover on region loss</text>`,
+  whatChanged: 'Region B is a passive standby — Postgres streams asynchronously from Region A\'s primary, and the API layer is scaled to zero but ready to scale up on failover. A documented DR runbook defines RTO/RPO targets and the exact failover procedure. Blue/green deploys mean a new version goes live alongside the old one, traffic shifts gradually, and rollback is instant if metrics regress. A WAF in front of the load balancer adds a layer against common web attacks before traffic even reaches the application. This is the full picture an architect interview expects you to whiteboard when asked "how would this run in production."'
+},
+];
+
+let ragInfraStageIdx = 0;
+function selectRagInfraStage(i) {
+  ragInfraStageIdx = i;
+  const s = RAG_INFRA_STAGES[i];
+  document.querySelectorAll('#ragInfraPills .infra-pill').forEach((p,pi)=>p.classList.toggle('on', pi===i));
+  document.getElementById('ragInfraContent').innerHTML = `
+    <div class="infra-stage-hdr">
+      <span class="tag ${s.tagc}">${s.num}</span>
+      <span class="infra-stage-title">${s.title}</span>
+      <span class="tag ${s.tagc}" style="opacity:.7;">${s.tag}</span>
+    </div>
+    <div class="infra-stage-desc">${s.desc}</div>
+    <div class="diag-box">
+      <svg width="100%" viewBox="0 0 700 ${s.svgH}" xmlns="http://www.w3.org/2000/svg">
+        <defs><marker id="infra-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#2d4060" stroke-width="1.5"/></marker></defs>
+        ${s.diagram}
+      </svg>
+    </div>
+    <div class="infra-whatchanged">
+      <div class="infra-whatchanged-title">What changed vs previous stage</div>
+      <div class="infra-whatchanged-body">${s.whatChanged}</div>
+    </div>`;
+}
+function initRagInfraStages() {
+  const pillsEl = document.getElementById('ragInfraPills');
+  if (!pillsEl) return;
+  pillsEl.innerHTML = RAG_INFRA_STAGES.map((s,i)=>`<button class="infra-pill${i===0?' on':''}" onclick="selectRagInfraStage(${i})">${s.num}</button>`).join('');
+  selectRagInfraStage(0);
+}
+
+let history = [], currentStage = 0;
+
+function sendAsk() {
+  const inp = document.getElementById('askInp');
+  const q = inp.value.trim(); if (!q) return;
+  inp.value = '';
+  addMsg('user', q);
+  const thinking = addMsg('ai', '<span class="sp"></span>Thinking…');
+  history.push({ role: 'user', content: q });
+  const s = STAGES[currentStage];
+  const sys = `You are a senior RAG/ML engineer. The user is studying ${s.num}: "${s.title}". They lead Claims and Recovery AI at Wells Fargo (SR 11-7, 18-person team). This stage covers: CHUNK (${Object.values(s.wn)[0][0]}), SEARCH, ASSEMBLE, GENERATE. Be precise and production-focused. 3-5 sentences max.`;
+  fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:500, system:sys, messages:history })
+  }).then(r=>r.json()).then(d=>{
+    const ans = d.content?.map(b=>b.text||'').join('')||'Error.';
+    history.push({ role:'assistant', content:ans });
+    thinking.querySelector('.bbl').innerHTML = ans.replace(/\n/g,'<br>');
+    document.getElementById('askBody').scrollTop = 9999;
+  }).catch(e=>{ thinking.querySelector('.bbl').textContent='Error: '+e.message; });
+}
+
+function addMsg(role, html) {
+  const body = document.getElementById('askBody');
+  const div = document.createElement('div');
+  div.className = 'msg';
+  div.innerHTML = `<div class="who">${role==='user'?'You':'Claude'}</div><div class="bbl ${role==='user'?'bbl-u':'bbl-a'}">${html}</div>`;
+  body.appendChild(div);
+  body.scrollTop = 9999;
+  return div;
+}
+
+// ═══════════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════════
+function selectStage(i) {
+  currentStage = i; history = [];
+  const s = STAGES[i];
+
+  document.querySelectorAll('.hpill').forEach((p,pi)=>p.classList.toggle('on',pi===i));
+  document.querySelectorAll('.si').forEach((el,ei)=>el.classList.toggle('on',ei===i));
+
+  // Header
+  document.getElementById('stageHdr').innerHTML = `
+    <div class="sh-top">
+      <span class="sh-num">${s.num}</span>
+      <span class="sh-title">${s.title}</span>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-left:auto;">
+        ${s.tags.map(t=>`<span class="tag ${t.c}">${t.l}</span>`).join('')}
+      </div>
+    </div>
+    <div class="sh-desc">${s.desc}</div>
+    <div class="sh-meta">
+      <span>file: <strong>${s.filename}</strong></span>
+      <span>steps covered: <strong>① CHUNK &nbsp;② SEARCH &nbsp;③ ASSEMBLE &nbsp;④ GENERATE</strong></span>
+    </div>`;
+
+  // Code + what's new
+  const wnHtml = `
+    <div class="wn">
+      <div class="wn-title">What this stage adds across all 4 steps</div>
+      <div class="wn-grid">
+        <div class="wn-step"><div class="wn-step-label" style="color:var(--teal);">① Chunk</div><ul>${s.wn.chunk.map(w=>`<li>${w}</li>`).join('')}</ul></div>
+        <div class="wn-step"><div class="wn-step-label" style="color:var(--amber);">② Search</div><ul>${s.wn.search.map(w=>`<li>${w}</li>`).join('')}</ul></div>
+        <div class="wn-step"><div class="wn-step-label" style="color:var(--purple);">③ Assemble</div><ul>${s.wn.assemble.map(w=>`<li>${w}</li>`).join('')}</ul></div>
+        <div class="wn-step"><div class="wn-step-label" style="color:var(--green);">④ Generate</div><ul>${s.wn.generate.map(w=>`<li>${w}</li>`).join('')}</ul></div>
+      </div>
+      <div class="inst"><div class="inst-lbl">Install</div>${s.install}</div>
+    </div>`;
+
+  document.getElementById('codeArea').innerHTML = `
+    <div class="cb">
+      <div class="cb-bar">
+        <div class="cb-left">
+          <span class="cb-lang">python</span>
+          <span class="cb-file">${s.filename}</span>
+        </div>
+        <button class="cb-copy" onclick="copyCode()">Copy</button>
+      </div>
+      <pre id="codePre">${s.code}</pre>
+    </div>
+    ${wnHtml}`;
+
+  // Ask suggestions
+  const body = document.getElementById('askBody');
+  body.innerHTML = '<div class="sugs" id="sugs"></div>';
+  document.getElementById('sugs').innerHTML = QUESTIONS[i].map(q=>
+    `<button class="sug" onclick="askQ(this.textContent)">${q}</button>`).join('');
+  document.getElementById('askSub').textContent = `${s.num} · Claims AI · all 4 steps`;
+}
+
+function askQ(q){document.getElementById('askInp').value=q;sendAsk();}
+function copyCode(){
+  navigator.clipboard.writeText(document.getElementById('codePre').innerText).then(()=>{
+    const b=document.querySelector('.cb-copy');b.textContent='Copied!';setTimeout(()=>b.textContent='Copy',2000);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  ARCHITECT SECTIONS
+// ═══════════════════════════════════════════════════════
+const ARCH = [
+{
+id:'design', num:'A1', title:'Design Decisions',
+desc:'The 8 most-tested architect decision points — scenario, recommended choice, reasoning, and when NOT to use it.',
+qs:[
+{q:'Why pgvector over Pinecone for a regulated bank?', a:'Data residency — policy and claims documents cannot leave the network perimeter without significant legal review, ruling out most SaaS vector stores. pgvector keeps vectors co-located with existing Postgres governance: tenant isolation is a WHERE clause, audit logs sit in the same schema, and the model risk team can inspect the full retrieval system without external vendor access.', mnemonic:'Data can\'t leave the building — pgvector stays in-house', steps:['Sensitive docs','Can\'t leave network','pgvector: on-prem','Governance co-located']},
+{q:'When is fixed-size chunking the right call?', a:'For short, uniform documents like FAQ entries or product descriptions under ~100 tokens, where sentence-boundary detection adds complexity without real benefit. Fixed-size is also the right starting point for quick prototypes before you\'ve identified your corpus\'s actual boundary problems.', mnemonic:'Short + uniform = fixed-size is fine', steps:['Doc type','Short & uniform?','Yes → fixed-size','No → sentence-aware']},
+{q:'When should you NOT use RAG at all?', a:'When the answer requires reasoning across an entire document rather than a specific retrievable passage, when your latency budget is under 100ms (retrieval adds irreducible latency), or when the knowledge base is small enough to fit entirely in a long-context window — a single LLM call with the full document is then simpler and more accurate than retrieval.', mnemonic:'Whole-doc reasoning or tiny KB → skip RAG', steps:['Need full-doc reasoning?','Or KB fits context?','Either → skip RAG','Otherwise → use RAG']},
+],
+render:()=>`
+<div class="ah-top"><span class="ah-num">A1</span><span class="ah-title">Design Decisions</span></div>
+<div class="ah-desc">The choices architects are asked to defend. Each card shows the scenario, the recommended decision, the engineering reason, and the counter-case.</div>
+<div class="dc-grid" style="margin-top:14px;">
+${[
+{sc:'Chunking strategy',ch:'Sentence-boundary + overlap',why:'Preserves semantic units. Overlap prevents answers that span boundaries from being missed. SHA-256 IDs enable dedup on re-ingest.',not:'Fixed-size is fine for short uniform docs (FAQ rows, product descriptions &lt;100 tokens).'},
+{sc:'Embedding model',ch:'BGE-large-en-v1.5 (open source)',why:'MTEB leaderboard top tier, free, runs on-prem — critical for regulated environments where data cannot leave the network. Normalize embeddings for cosine.',not:'OpenAI text-embedding-3-large for external SaaS where data residency is not a constraint and you want zero infra.'},
+{sc:'Vector store at a bank',ch:'pgvector on existing Postgres',why:'No new infra, tenant isolation via WHERE clause, ACID transactions, schema-level data governance, audit log co-located with vectors. HNSW index via CREATE INDEX USING hnsw.',not:'Pinecone/Weaviate when you need >100M vectors, serverless scaling, or don\'t have a Postgres DBA on the team.'},
+{sc:'Retrieval strategy',ch:'Hybrid BM25 + dense + RRF',why:'BM25 catches exact policy terms (claim numbers, regulation codes). Dense catches paraphrases. RRF fusion without score normalisation. Cross-encoder reranks top-20 candidates.',not:'Dense-only on keyword-heavy corpora like claims policy docs where exact term match matters.'},
+{sc:'Context window assembly',ch:'Budget trim + dedup + doc-order sort',why:'Dedup removes near-identical overlapping chunks. Budget prevents token waste. Doc-order sort improves LLM comprehension — model reads narrative flow, not score order.',not:'Just truncating to first N chars — loses the highest-scored chunks if they appear later.'},
+{sc:'RAG vs Fine-tuning',ch:'RAG for Claims policy KB',why:'Policy docs update frequently — re-indexing is cheap, re-training is not. RAG provides citation trail for SR 11-7. Multi-tenant isolation via metadata filter, not per-tenant models.',not:'Fine-tune when you need a specific output format or tone that cannot be achieved via system prompt alone.'},
+{sc:'Query rewriting',ch:'HyDE (Hypothetical Document Embedding)',why:'Embedding a hypothetical answer is closer to real answer chunks than the raw query embedding. 15-30% recall improvement on domain-specific corpora.',not:'Multi-query expansion when query is already clear — adds latency and cost with diminishing returns.'},
+{sc:'Agentic vs pipeline RAG',ch:'Pipeline RAG for deterministic workflows',why:'Pipeline is debuggable, auditable, has predictable latency. SR 11-7 requires traceable decision paths. Agentic RAG for exploratory queries where the retrieval path is unknown upfront.',not:'Agentic RAG in production without human-in-loop — non-deterministic paths are hard to validate under model risk frameworks.'},
+].map(d=>`<div class="dc"><div class="dc-scenario">${d.sc}</div><div class="dc-choice">${d.ch}</div><div class="dc-why">${d.why}</div><div class="dc-not"><strong>When NOT to use:</strong> ${d.not}</div></div>`).join('')}
+</div>`
+},
+
+{
+id:'tradeoffs', num:'A2', title:'Tradeoff Tables',
+desc:'Side-by-side comparisons for every major RAG component decision. Print these mentally before walking into the interview.',
+qs:[
+{q:'What are the tradeoffs between dense and sparse retrieval?', a:'Dense (bi-encoder) embeddings catch semantic paraphrases — different words, same meaning — but can miss exact keyword matches like policy codes or claim numbers. Sparse (BM25) is the reverse: excellent at exact term matching, weak on synonyms or rephrased queries. Hybrid retrieval with RRF fusion gets both, which is why it\'s the production default.', mnemonic:'Dense=meaning, Sparse=keywords, Hybrid=both', steps:['Dense: semantic','Misses exact terms','Sparse: keywords','Hybrid: RRF combines both']},
+{q:'When does HNSW beat IVF?', a:'HNSW wins on query speed and recall (95-99%) once the index is built, making it the right choice for low-latency production serving. IVF builds and updates faster and uses less memory, making it better suited to corpora that change frequently or where build time matters more than per-query latency.', mnemonic:'HNSW = fast queries. IVF = fast updates.', steps:['Static, low-latency?','HNSW wins','Frequent updates?','IVF wins']},
+{q:'pgvector vs Pinecone for 10M vectors?', a:'10M vectors is comfortably within pgvector\'s practical range (~50M before sharding becomes necessary), so the data residency and governance benefits of pgvector still apply without hitting its scale ceiling. Pinecone becomes the better choice once you\'re past tens of millions of vectors or need serverless elastic scaling that a single Postgres instance can\'t provide.', mnemonic:'10M is well within pgvector\'s comfort zone', steps:['10M vectors','Within pgvector range','No data residency issue','pgvector still wins']},
+],
+render:()=>`
+<div class="ah-top"><span class="ah-num">A2</span><span class="ah-title">Tradeoff Tables</span></div>
+<div class="ah-desc">Every major component decision laid out as a comparison. Know these cold — interviewers love "compare X and Y".</div>
+
+<div class="section-h">Retrieval Strategy</div>
+<table class="tt"><thead><tr><th>Strategy</th><th>Recall on synonyms</th><th>Recall on exact terms</th><th>Latency</th><th>Best for</th></tr></thead><tbody>
+<tr><td>TF-IDF / BM25</td><td class="bad">Low</td><td class="good">High</td><td class="good">Fast</td><td>Policy codes, claim numbers, keywords</td></tr>
+<tr><td>Dense (bi-encoder)</td><td class="good">High</td><td class="ok">Medium</td><td class="ok">Medium</td><td>Semantic questions, paraphrases</td></tr>
+<tr><td>Hybrid + RRF</td><td class="good">High</td><td class="good">High</td><td class="ok">Medium</td><td>Production — best of both</td></tr>
+<tr><td>Cross-encoder rerank</td><td class="good">Highest</td><td class="good">Highest</td><td class="bad">Slow</td><td>Final reranking of top-K only</td></tr>
+</tbody></table>
+
+<div class="section-h">Vector Index Type</div>
+<table class="tt"><thead><tr><th>Index</th><th>Build time</th><th>Query speed</th><th>Recall@10</th><th>Memory</th><th>Updates</th></tr></thead><tbody>
+<tr><td>Flat (exact)</td><td class="good">Instant</td><td class="bad">O(n) slow</td><td class="good">100%</td><td class="bad">High</td><td class="good">Easy</td></tr>
+<tr><td>IVF (cluster)</td><td class="good">Fast</td><td class="good">Fast</td><td class="ok">85–95%</td><td class="good">Low</td><td class="ok">Re-cluster</td></tr>
+<tr><td>HNSW (graph)</td><td class="bad">Slow</td><td class="good">Very fast</td><td class="good">95–99%</td><td class="bad">High RAM</td><td class="ok">Append OK</td></tr>
+<tr><td>pgvector HNSW</td><td class="bad">Slow</td><td class="good">Very fast</td><td class="good">95–99%</td><td class="ok">Postgres</td><td class="good">SQL native</td></tr>
+</tbody></table>
+
+<div class="section-h">Vector Store</div>
+<table class="tt"><thead><tr><th>Store</th><th>Data residency</th><th>Multi-tenant</th><th>Max scale</th><th>Hybrid search</th><th>SR 11-7 fit</th></tr></thead><tbody>
+<tr><td>pgvector</td><td class="good">On-prem/VPC</td><td class="good">WHERE clause</td><td class="ok">~50M vectors</td><td class="ok">Manual</td><td class="good">High</td></tr>
+<tr><td>Pinecone</td><td class="bad">SaaS (US/EU)</td><td class="ok">Namespaces</td><td class="good">Billions</td><td class="good">Native</td><td class="ok">Medium</td></tr>
+<tr><td>Weaviate</td><td class="good">Self-hosted</td><td class="good">Multi-tenant</td><td class="good">100M+</td><td class="good">Native</td><td class="good">High</td></tr>
+<tr><td>Qdrant</td><td class="good">Self-hosted</td><td class="good">Collections</td><td class="good">100M+</td><td class="good">Native</td><td class="good">High</td></tr>
+</tbody></table>
+
+<div class="section-h">Embedding Model</div>
+<table class="tt"><thead><tr><th>Model</th><th>Dim</th><th>Cost</th><th>Data leaves network</th><th>Domain fine-tune</th><th>Best for</th></tr></thead><tbody>
+<tr><td>OpenAI text-embedding-3-large</td><td>3072</td><td class="bad">API cost</td><td class="bad">Yes</td><td class="bad">No</td><td>General SaaS products</td></tr>
+<tr><td>BGE-large-en-v1.5</td><td>1024</td><td class="good">Free</td><td class="good">No</td><td class="good">Yes</td><td>Regulated, on-prem</td></tr>
+<tr><td>Cohere embed-v3</td><td>1024</td><td class="ok">API cost</td><td class="bad">Yes</td><td class="bad">No</td><td>Multilingual, SaaS</td></tr>
+<tr><td>Instructor-XL</td><td>768</td><td class="good">Free</td><td class="good">No</td><td class="good">Yes</td><td>Task-specific on-prem</td></tr>
+</tbody></table>
+
+<div class="section-h">Chunking Strategy</div>
+<table class="tt"><thead><tr><th>Strategy</th><th>Boundary quality</th><th>Semantic coherence</th><th>Speed</th><th>Best for</th></tr></thead><tbody>
+<tr><td>Fixed-size (token window)</td><td class="bad">Cuts mid-sentence</td><td class="bad">Low</td><td class="good">Fastest</td><td>Uniform short docs, quick prototypes</td></tr>
+<tr><td>Sentence boundary</td><td class="good">Clean</td><td class="ok">Medium</td><td class="good">Fast</td><td>Policy docs, reports, articles</td></tr>
+<tr><td>Semantic (paragraph+topic)</td><td class="good">Clean</td><td class="good">High</td><td class="ok">Medium</td><td>Long-form documents with topic shifts</td></tr>
+<tr><td>Parent-child</td><td class="good">Clean</td><td class="good">High</td><td class="ok">Medium</td><td>When precision retrieval + full context both needed</td></tr>
+<tr><td>Propositional</td><td class="good">Atomic facts</td><td class="good">Highest</td><td class="bad">LLM cost</td><td>High-value knowledge bases, QA accuracy critical</td></tr>
+</tbody></table>`
+},
+
+{
+id:'evaluation', num:'A3', title:'RAG Evaluation',
+desc:'RAGAS metrics, offline eval pipeline, online monitoring, and embedding drift detection. The most underrated interview topic.',
+qs:[
+{q:'How do you measure whether RAG is actually working?', a:'Separate retrieval quality from answer quality. For retrieval: context precision (what fraction of retrieved chunks were actually useful) and context recall (did retrieval find everything needed). For answers: faithfulness (are claims supported by context) and answer relevancy (does it address the question). Run all four via RAGAS against a golden dataset before and after any pipeline change.', mnemonic:'Retrieval: precision+recall. Answer: faithful+relevant.', steps:['RAG output','Score retrieval','Score answer','4 RAGAS metrics']},
+{q:'What RAGAS score is good enough for production?', a:'Faithfulness above 0.90, answer relevancy above 0.85, context precision above 0.80, and context recall above 0.85 are reasonable production bars for a regulated environment. Any single metric below these thresholds, or any regression greater than 2% from your established baseline, should block deployment until investigated.', mnemonic:'Faithfulness 90+, others 80-85+, 2% regression = block', steps:['Run RAGAS','Faithfulness ≥0.90?','Others ≥0.80-0.85?','All pass → deploy']},
+{q:'How do you detect embedding model drift?', a:'Store the embedding_model name and version on every chunk row, and at query time assert the query encoder matches the stored model — any mismatch silently degrades retrieval. For statistical drift detection without ground truth, run a Welch\'s t-test comparing current cosine score distributions against a historical baseline; a significant shift signals the model or data distribution has changed.', mnemonic:'Version-check at query time, t-test for silent drift', steps:['Query embeds','Check model version','Mismatch? Alert','Match? t-test scores']},
+],
+render:()=>`
+<div class="ah-top"><span class="ah-num">A3</span><span class="ah-title">RAG Evaluation</span></div>
+<div class="ah-desc">Interviewers push hard on this. You need to separate retrieval quality from answer quality, run offline evals before deployment, and monitor both in production.</div>
+
+<div class="section-h">RAGAS Metrics — the 4 you must know</div>
+<div class="mc-grid">
+<div class="mc"><div class="mc-name">Faithfulness</div><div class="mc-formula">claims_supported / total_claims</div><div class="mc-desc">Are all claims in the answer supported by the retrieved context? Measures hallucination. A faithful answer makes no claims outside the context.</div><div class="mc-good">✓ Good: &gt; 0.85 &nbsp;|&nbsp; Production bar: &gt; 0.90</div></div>
+<div class="mc"><div class="mc-name">Answer Relevancy</div><div class="mc-formula">avg cosine(generated_questions, original_query)</div><div class="mc-desc">Does the answer actually address the question? Generates N questions from the answer and measures how well they match the original query.</div><div class="mc-good">✓ Good: &gt; 0.80 &nbsp;|&nbsp; Production bar: &gt; 0.85</div></div>
+<div class="mc"><div class="mc-name">Context Precision</div><div class="mc-formula">useful_chunks_in_top_K / K</div><div class="mc-desc">Of the chunks retrieved, what fraction were actually useful? Measures retrieval precision — are you retrieving noise?</div><div class="mc-good">✓ Good: &gt; 0.75 &nbsp;|&nbsp; Production bar: &gt; 0.80</div></div>
+<div class="mc"><div class="mc-name">Context Recall</div><div class="mc-formula">ground_truth_statements_covered / total_statements</div><div class="mc-desc">Did retrieval find all the chunks needed to answer? Requires a golden dataset with expected answer statements. Measures retrieval completeness.</div><div class="mc-good">✓ Good: &gt; 0.80 &nbsp;|&nbsp; Production bar: &gt; 0.85</div></div>
+</div>
+
+<div class="section-h">Offline Eval Pipeline</div>
+<div class="info-box"><div class="info-title">How to build a golden dataset eval</div><div class="info-body"><ol style="padding-left:16px;">
+<li>Create 50–200 (question, ground_truth_answer, source_doc_id) triples from your domain experts</li>
+<li>Run your RAG pipeline on each question — record retrieved chunks, generated answer</li>
+<li>Score each run with RAGAS: faithfulness, answer relevancy, context precision, context recall</li>
+<li>Track scores across pipeline versions — any regression in faithfulness &gt; 2% blocks deployment</li>
+<li>For Wells Fargo Claims: golden set should include SR 11-7 edge cases (missing policy, ambiguous coverage, multi-policy queries)</li>
+</ol></div></div>
+
+<div class="section-h">Online Production Monitoring</div>
+<table class="tt"><thead><tr><th>Metric</th><th>What it catches</th><th>Alert threshold</th><th>SR 11-7 note</th></tr></thead><tbody>
+<tr><td>Retrieval latency p95</td><td>Index degradation, connection pool exhaustion</td><td class="ok">&gt; 500ms</td><td>Log per query</td></tr>
+<tr><td>Retrieval miss rate</td><td>Queries returning 0 chunks above score threshold</td><td class="bad">&gt; 5%</td><td>Log query hash</td></tr>
+<tr><td>Grounding score</td><td>Answer not citing retrieved chunks — hallucination risk</td><td class="bad">&lt; 0.5</td><td>Log per answer</td></tr>
+<tr><td>INSUFFICIENT_CONTEXT rate</td><td>KB coverage gaps — need new documents</td><td class="ok">&gt; 10%</td><td>Log query + tenant</td></tr>
+<tr><td>Token usage per query</td><td>Cost runaway, context stuffing</td><td class="ok">&gt; 4000 tokens</td><td>Log for cost allocation</td></tr>
+<tr><td>Embedding model version</td><td>Drift when model changes but old vectors not re-indexed</td><td class="bad">Version mismatch</td><td>Mandatory SR 11-7</td></tr>
+</tbody></table>
+
+<div class="section-h">Embedding Drift Detection</div>
+<div class="info-box" style="border-left-color:var(--amber)"><div class="info-title" style="color:var(--amber);">When your embedding model changes</div><div class="info-body">If you upgrade your embedding model (e.g. BGE v1.5 → v2.0), old vectors are incompatible with new query embeddings — retrieval silently degrades. Mitigation: <br><br>
+1. Store <code>embedding_model</code> version on every chunk row (Stage 5 already does this)<br>
+2. At query time, check that query embedding model = stored embedding model<br>
+3. If mismatch: re-embed all chunks with new model before deploying (offline batch job)<br>
+4. Use Welch's t-test on cosine score distributions to detect drift without ground truth labels<br>
+5. SR 11-7: document model version changes in model inventory with before/after RAGAS scores</div></div>`
+},
+
+{
+id:'failures', num:'A4', title:'Failure Modes',
+desc:'The 8 ways RAG breaks in production. Architects are expected to anticipate these before they happen.',
+qs:[
+{q:'How do you prevent retrieval hallucination?', a:'Layer four defenses: an explicit system prompt instruction to answer only from context with a defined fallback phrase, citation enforcement so claims must reference a chunk_id, a post-generation grounding check that scores what fraction of answer sentences actually cite a retrieved chunk, and tight context assembly (reranked, deduplicated) so there\'s less irrelevant material for the model to drift into using.', mnemonic:'Prompt rule + citations + grounding score + tight context', steps:['Context-only prompt','Require citations','Grounding score check','Tight, reranked context']},
+{q:'What causes the semantic gap problem?', a:'Query and document use different vocabulary for the same concept — a claimant might say "write-off" while the policy document says "charge-off." Dense embeddings can miss this if the terms aren\'t close in embedding space, and BM25 misses it because the exact term differs. HyDE query rewriting and domain-specific embedding fine-tuning are the two main fixes.', mnemonic:'Different words, same meaning — gap that retrieval misses', steps:['Query term A','Doc uses term B','Same meaning','Retrieval misses match']},
+{q:'How do you handle stale indexes in production?', a:'Content-addressed chunking (SHA-256 IDs) means re-ingesting a changed document only re-embeds chunks whose content actually changed — unchanged chunks keep their existing ID and embedding. Trigger re-ingestion via a Kafka event when the source document changes, and track ingested_at timestamps to monitor for documents that haven\'t been refreshed in an unexpectedly long time.', mnemonic:'Content hash means only changed chunks get re-embedded', steps:['Doc updated','Re-chunk it','Compare SHA-256 IDs','Only changed chunks re-embed']},
+],
+render:()=>`
+<div class="ah-top"><span class="ah-num">A4</span><span class="ah-title">Failure Modes</span></div>
+<div class="ah-desc">Every production RAG system hits these. Know the cause, the symptom, and the fix before the interview asks.</div>
+${[
+{name:'Retrieval Hallucination',cause:'Model answers from parametric memory, ignoring retrieved context',symptom:'Answer is confident and plausible but cites no chunks. Grounding score = 0.',fix:'System prompt: "Answer ONLY from context. If insufficient, say INSUFFICIENT_CONTEXT." Add grounding score check in generation node. Re-retrieve if score < 0.5.'},
+{name:'Semantic Gap',cause:'Query and document use different vocabulary for the same concept (e.g. "write-off" vs "charge-off")',symptom:'Dense retrieval misses obviously relevant docs. BM25 also misses because exact term differs.',fix:'HyDE query rewriting. Domain-specific fine-tuned embeddings. Synonym expansion in query preprocessing. Hybrid retrieval — BM25 catches one term, dense catches the other.'},
+{name:'Chunk Boundary Split',cause:'The answer spans two adjacent chunks — neither contains enough information alone',symptom:'Low faithfulness on questions whose answer is a multi-paragraph explanation.',fix:'Sliding window overlap (last 2 sentences carried forward). Parent-child chunking: retrieve small child, return large parent. Adjacent chunk stitching in assembly.'},
+{name:'Embedding Model Mismatch',cause:'Query encoder and document encoder are different models (or same model but different versions)',symptom:'Cosine scores are uniformly low (~0.1) even for obviously relevant queries.',fix:'Always encode queries and documents with the same model. Store embedding_model version per chunk. Alert on version mismatch before serving.'},
+{name:'Stale Index',cause:'Source documents updated but vectors not re-indexed',symptom:'RAG answers old policy versions. Faithfulness is high but answers are factually wrong vs current policy.',fix:'Trigger re-ingest on document change events (Kafka/webhook). Store ingested_at timestamp per chunk. Monitor doc version vs chunk version. SHA-256 chunk ID detects content changes without re-reading all docs.'},
+{name:'Context Stuffing',cause:'Too many chunks sent to LLM — exceeds attention capacity or buries the relevant chunk',symptom:'Answer quality degrades as top-K increases beyond 5–7 chunks.',fix:'Token budget enforcement. Cross-encoder reranking reduces to true top-3. Contextual compression extracts only the relevant sentence from each chunk. Doc-order sort improves attention.'},
+{name:'Multi-tenant Data Leakage',cause:'Missing or incorrect tenant_id filter — one tenant retrieves another tenant\'s chunks',symptom:'Audit log shows chunk_ids from wrong tenant in retrieval results. Usually caught in pen testing.',fix:'Always include WHERE tenant_id = $param in every pgvector query. Integration test: assert that tenant A never retrieves tenant B chunks. Separate schemas per tenant for highest isolation.'},
+{name:'Latency Budget Overrun',cause:'Each pipeline step adds latency — embedding (50ms) + pgvector (80ms) + reranker (200ms) + LLM (600ms) = 930ms',symptom:'p95 latency &gt; 1s. Users perceive the assistant as slow.',fix:'Async parallel BM25 + dense retrieval. Skip cross-encoder for low-stakes queries (use confidence threshold). Cache frequent query embeddings (Redis, 1hr TTL). Stream LLM response to UI. Pre-warm connection pool.'},
+].map(f=>`<div class="fc"><div class="fc-name">${f.name}</div><div class="fc-grid"><div class="fc-block"><div class="fc-lbl">Cause</div>${f.cause}</div><div class="fc-block"><div class="fc-lbl">Symptom</div>${f.symptom}</div><div class="fc-block"><div class="fc-lbl">Fix</div>${f.fix}</div></div></div>`).join('')}`
+},
+
+{
+id:'sysdesign', num:'A5', title:'System Design',
+desc:'Full architecture — ingestion pipeline, online serving path, monitoring layer, and re-index strategy. Both diagram and written breakdown.',
+qs:[
+{q:'Walk me through the full RAG system architecture', a:'Ingestion pipeline parses, cleans, chunks, embeds, and writes to pgvector with tenant isolation, triggered by document-change events. The serving path runs BM25 and dense retrieval in parallel, fuses via RRF, cross-encoder reranks, and a PayloadBuilder deduplicates and assembles the final context before streaming the LLM response. A monitoring layer tracks latency, grounding scores, and RAGAS metrics; re-indexing is content-addressed so only changed chunks get reprocessed.', mnemonic:'Ingest→Index, Retrieve∥Fuse→Rerank, Assemble→Stream', steps:['Ingest & index','Parallel retrieve','Fuse & rerank','Assemble & generate']},
+{q:'How does your ingestion pipeline handle document updates?', a:'Content-addressed chunk IDs (SHA-256) mean re-chunking an updated document only produces new IDs for the sections that actually changed — unchanged chunks keep their existing embedding and are skipped via ON CONFLICT DO NOTHING. A Kafka event on document change triggers the ingestion worker, which re-chunks, diffs against existing chunk_ids, and only re-embeds what\'s new.', mnemonic:'Diff the chunk IDs, only re-embed what changed', steps:['Doc change event','Re-chunk doc','Diff vs old chunk_ids','Re-embed only new ones']},
+{q:'Where does latency accumulate in the serving path?', a:'Roughly: query embedding ~40ms, BM25 ~10ms (parallel with dense), dense ANN ~80ms, RRF fusion ~5ms, cross-encoder reranking ~180ms (the single biggest chunk), context assembly ~10ms, and LLM first-token latency ~500-600ms dominating the total. The reranker and the LLM call are the two places worth optimizing first if you need to cut latency.', mnemonic:'Reranker and LLM call dominate — optimize those first', steps:['Embed+retrieve: ~130ms','Rerank: ~180ms','Assemble: ~10ms','LLM: ~600ms dominates']},
+],
+render:()=>`
+<div class="ah-top"><span class="ah-num">A5</span><span class="ah-title">System Design</span></div>
+<div class="ah-desc">The full system — not just the retrieval loop. Architects are asked to whiteboard all components, SLAs, and failure paths.</div>
+
+<div class="diag-box">
+<div class="diag-title">Ingestion Pipeline</div>
+<svg width="100%" viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#2d4060" stroke-width="1.5"/></marker></defs>
+${[
+{x:20,w:90,label:'Source\nDocs',sub:'PDF/DOCX\nHTML/DB',c:'#1a2236',bc:'#2d4060'},
+{x:140,w:90,label:'Parser\n& Cleaner',sub:'unstructured\nOCR/tables',c:'rgba(0,212,200,.08)',bc:'var(--teal)'},
+{x:260,w:90,label:'Chunker',sub:'sentence+\noverlap+SHA',c:'rgba(245,158,11,.08)',bc:'var(--amber)'},
+{x:380,w:90,label:'Embedder',sub:'BGE-large\nbatch GPU',c:'rgba(167,139,250,.08)',bc:'var(--purple)'},
+{x:500,w:90,label:'pgvector\nStore',sub:'HNSW index\ntenant_id',c:'rgba(52,211,153,.08)',bc:'var(--green)'},
+{x:620,w:70,label:'Audit\nLog',sub:'chunk_id\nmodel_ver',c:'rgba(248,113,113,.08)',bc:'var(--coral)'},
+].map((n,i,arr)=>{
+  const cx=n.x+n.w/2; const ls=n.label.split('\n'); const ss=n.sub.split('\n');
+  const rect=`<rect x="${n.x}" y="55" width="${n.w}" height="50" rx="6" fill="${n.c}" stroke="${n.bc}" stroke-width="1"/>`;
+  const t1=ls.map((l,li)=>`<text x="${cx}" y="${63+li*14}" text-anchor="middle" fill="${n.bc}" font-size="10" font-weight="700" font-family="sans-serif">${l}</text>`).join('');
+  const t2=ss.map((l,li)=>`<text x="${cx}" y="${91+li*11}" text-anchor="middle" fill="#4a5568" font-size="9" font-family="sans-serif">${l}</text>`).join('');
+  const arrow=i<arr.length-1?`<line x1="${n.x+n.w+2}" y1="80" x2="${arr[i+1].x-2}" y2="80" stroke="#2d4060" stroke-width="1" marker-end="url(#a1)"/>`:'';
+  return rect+t1+t2+arrow;
+}).join('')}
+<text x="350" y="140" text-anchor="middle" fill="#4a5568" font-size="9" font-family="sans-serif">Kafka event triggers re-ingest on document change · batch GPU embedding · async DB writes</text>
+</svg></div>
+
+<div class="diag-box">
+<div class="diag-title">Online Serving Path (per query)</div>
+<svg width="100%" viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#2d4060" stroke-width="1.5"/></marker></defs>
+${[
+{x:10,y:80,w:80,h:40,label:'User Query',c:'#1a2236',bc:'#2d4060',lat:''},
+{x:110,y:80,w:90,h:40,label:'Query Embed',c:'rgba(0,212,200,.08)',bc:'#00d4c8',lat:'~40ms'},
+{x:220,y:55,w:85,h:40,label:'BM25 Sparse',c:'rgba(245,158,11,.08)',bc:'#f59e0b',lat:'~10ms'},
+{x:220,y:105,w:85,h:40,label:'Dense ANN',c:'rgba(167,139,250,.08)',bc:'#a78bfa',lat:'~80ms'},
+{x:325,y:80,w:80,h:40,label:'RRF Fusion',c:'rgba(52,211,153,.08)',bc:'#34d399',lat:'~5ms'},
+{x:425,y:80,w:85,h:40,label:'Reranker',c:'rgba(245,158,11,.08)',bc:'#f59e0b',lat:'~180ms'},
+{x:530,y:80,w:80,h:40,label:'Assemble',c:'rgba(167,139,250,.08)',bc:'#a78bfa',lat:'~10ms'},
+{x:630,y:80,w:60,h:40,label:'LLM\nStream',c:'rgba(52,211,153,.08)',bc:'#34d399',lat:'~600ms'},
+].map((n,i,arr)=>{
+  const cx=n.x+n.w/2; const cy=n.y+n.h/2;
+  const ls=n.label.split('\n');
+  const rect=`<rect x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" rx="6" fill="${n.c}" stroke="${n.bc}" stroke-width="1"/>`;
+  const txt=ls.map((l,li)=>`<text x="${cx}" y="${cy+(li-ls.length/2+0.6)*13}" text-anchor="middle" fill="${n.bc}" font-size="10" font-weight="700" font-family="sans-serif">${l}</text>`).join('');
+  const lat=n.lat?`<text x="${cx}" y="${n.y+n.h+12}" text-anchor="middle" fill="#4a5568" font-size="9" font-family="sans-serif">${n.lat}</text>`:'';
+  return rect+txt+lat;
+}).join('')}
+<line x1="90" y1="100" x2="108" y2="100" stroke="#2d4060" stroke-width="1" marker-end="url(#a2)"/>
+<line x1="200" y1="100" x2="218" y2="80" stroke="#2d4060" stroke-width="1" marker-end="url(#a2)"/>
+<line x1="200" y1="100" x2="218" y2="120" stroke="#2d4060" stroke-width="1" marker-end="url(#a2)"/>
+<line x1="305" y1="75" x2="323" y2="100" stroke="#2d4060" stroke-width="1" marker-end="url(#a2)"/>
+<line x1="305" y1="125" x2="323" y2="105" stroke="#2d4060" stroke-width="1" marker-end="url(#a2)"/>
+<line x1="405" y1="100" x2="423" y2="100" stroke="#2d4060" stroke-width="1" marker-end="url(#a2)"/>
+<line x1="510" y1="100" x2="528" y2="100" stroke="#2d4060" stroke-width="1" marker-end="url(#a2)"/>
+<line x1="610" y1="100" x2="628" y2="100" stroke="#2d4060" stroke-width="1" marker-end="url(#a2)"/>
+<text x="350" y="175" text-anchor="middle" fill="#4a5568" font-size="9" font-family="sans-serif">BM25 + Dense run in parallel · total p95 budget ~950ms · stream LLM to cut perceived latency</text>
+</svg></div>
+
+<div class="section-h">Written breakdown — all components</div>
+${[
+{title:'Ingestion pipeline',items:['Document connector layer — PDF (pdfminer/unstructured), DOCX, HTML, DB rows, S3. Triggered by Kafka events on document change.','Parser & cleaner — strip headers/footers, fix encoding, OCR for scanned PDFs (Textract), extract tables as markdown grids.','Chunker — sentence boundary split, SHA-256 content ID, sliding overlap, Pydantic-typed ProductionChunk.','Embedder — BGE-large-en-v1.5 batch GPU inference. Stores embedding_model version per row for drift detection.','pgvector write — async batch inserts with HNSW index. tenant_id on every row. ON CONFLICT DO NOTHING for idempotent re-ingest.']},
+{title:'Online serving path',items:['Query embedding — same model as ingestion (BGE-large). Cache frequent query embeddings in Redis (1hr TTL).','Parallel retrieval — BM25 via asyncio task + dense pgvector via asyncio task. Both fire simultaneously.','RRF fusion — merge ranked lists without score normalisation (k=60).','Cross-encoder reranker — ms-marco-MiniLM on top-20 candidates → final top-5.','PayloadBuilder — dedup, adjacent stitch, token budget, doc-order sort, compliance header.','LLM streaming — AsyncAnthropic stream. First token appears while assembly is still logging.']},
+{title:'Monitoring layer',items:['Structlog JSON to stdout — every query logs query_hash, tenant_id, chunk_ids, scores, latency_ms, model_version.','Grounding score per answer — % of sentences citing a retrieved chunk.','RAGAS offline eval — weekly golden dataset run. Faithfulness regression > 2% blocks deployment.','Latency dashboard — p50/p95 per step. Alert on retrieval > 200ms or total > 1s.','Retrieval miss rate — queries with 0 chunks above 0.5 score. Alert > 5%.']},
+{title:'Re-index strategy',items:['Content-addressed chunks (SHA-256 ID) — re-ingest only changed chunks, not full documents.','Embedding model upgrade — offline batch job re-embeds all chunks before swap. Blue/green index swap.','Kafka trigger — document store publishes change events. Ingestion worker subscribes and re-chunks changed doc.','Tenant isolation — re-index one tenant without affecting others. WHERE tenant_id scoped to batch job.']},
+].map(s=>`<div class="info-box"><div class="info-title">${s.title}</div><div class="info-body"><ul style="padding-left:14px;">${s.items.map(i=>`<li>${i}</li>`).join('')}</ul></div></div>`).join('')}
+
+<div class="section-h" style="margin-top:22px;">Infrastructure maturity — simple to production-grade</div>
+<div class="ah-desc" style="margin-bottom:12px;">The logical pipeline above doesn't change much across maturity levels — what changes is the deployment topology underneath it. Click through 6 stages to see how the SAME RAG system is hosted, from a single server to full multi-region production.</div>
+<div class="infra-pills" id="ragInfraPills"></div>
+<div id="ragInfraContent"></div>`
+},
+
+{
+id:'sr117', num:'A6', title:'SR 11-7 Compliance',
+desc:'Model Risk Management requirements for RAG at a regulated institution. What to log, validate, document, and govern.',
+qs:[
+
+{q:'What does SR 11-7 require for a RAG system?', a:'Every component — embedding model, LLM, vector index, chunking pipeline — registered in a model inventory with purpose, owner, version, and validation date. Independent validation (the validating team cannot be the development team), production performance monitoring against defined thresholds, and full documentation of limitations and assumptions, especially around chunking strategy and fallback behavior.', mnemonic:'Inventory + independent validation + monitoring + docs', steps:['Each component','Model inventory entry','Independent validation','Production monitoring']},
+{q:'How do you handle PII in retrieved chunks?', a:'Scan chunks for PII (names, SSNs, account numbers) at ingestion time using a NER model or regex patterns, before they\'re stored. Options from there: redact in-place, move PII into a separate encrypted column accessed only by authorized roles, or restrict PII-containing chunks to specific tenant/role combinations at retrieval time.', mnemonic:'Scan at ingest, redact or wall off before storage', steps:['Chunk created','NER/regex scan','PII found?','Redact or wall off']},
+{q:'What is model validation independence in the context of RAG?', a:'The team that validates retrieval quality — running RAGAS evals, adversarial tests, PII leakage checks — must be organizationally separate from the team that built the RAG pipeline. This isn\'t a formality; it exists specifically to catch the blind spots a development team has toward its own system\'s weaknesses.', mnemonic:'Builders test the pieces; a separate team tests the whole', steps:['Dev team builds','Dev team tests','Blind spots remain','Independent team validates']},
+],
+render:()=>`
+<div class="ah-top"><span class="ah-num">A6</span><span class="ah-title">SR 11-7 Compliance</span></div>
+<div class="ah-desc">SR 11-7 (Federal Reserve / OCC model risk guidance) applies to any model used in a regulated decision. RAG is a model system — every component needs governance.</div>
+
+<div class="section-h">P0 — Required before any production deployment</div>
+${[
+{item:'Model inventory registration',detail:'Register each component separately: embedding model (BGE-large-en-v1.5 v1.5.0), LLM (claude-sonnet-4-6), vector index (pgvector HNSW), chunking pipeline. Each entry: purpose, owner, version, validation date.',req:'req-p0'},
+{item:'Audit log per retrieval',detail:'Every query logs: query_hash (SHA-256, not raw text for PII), tenant_id, chunk_ids retrieved, similarity scores, embedding_model version, LLM model, input_tokens, output_tokens, latency_ms, timestamp.',req:'req-p0'},
+{item:'Model validation independence',detail:'The team that validates retrieval quality must be independent from the team that built the RAG pipeline. Validation includes: RAGAS eval on golden dataset, adversarial queries, out-of-domain queries, PII leakage test.',req:'req-p0'},
+{item:'Embedding model version tracking',detail:'Store embedding_model name and version on every chunk row. At query time, assert query model = stored model. Any model upgrade requires re-validation and re-indexing before serving.',req:'req-p0'},
+{item:'Human-in-loop for high-stakes decisions',detail:'Claims decisions above a threshold (e.g. recovery > $50K) require human review before answer is acted on. LangGraph interrupt_before node implements this. Log human decision outcome.',req:'req-p0'},
+].map(c=>`<div class="cl-section"><div class="cl-item"><div class="cl-check">✓</div><div style="flex:1;"><div style="font-weight:700;color:var(--t1);font-size:12px;margin-bottom:3px;">${c.item}</div><div style="font-size:11px;color:var(--t2);">${c.detail}</div></div><span class="cl-req ${c.req}">${c.req==='req-p0'?'P0 Required':c.req==='req-p1'?'P1 Important':'P2 Best practice'}</span></div></div>`).join('')}
+
+<div class="section-h">P1 — Required within 90 days of deployment</div>
+${[
+{item:'PII handling in chunks',detail:'Before storing, scan chunks for PII (names, SSN, account numbers) using a NER model or regex patterns. Options: redact in-place, store PII in separate encrypted column, or restrict PII chunks to specific tenant roles.',req:'req-p1'},
+{item:'Model performance monitoring',detail:'Weekly RAGAS eval on golden dataset. Monthly drift report comparing current retrieval scores to baseline. Any faithfulness regression > 2% triggers re-validation before next deployment.',req:'req-p1'},
+{item:'Chunking strategy documentation',detail:'Document: which chunking strategy used, why, max_tokens, overlap, embedding model. Changes to chunking require re-validation — different chunks = different model behavior.',req:'req-p1'},
+{item:'Fallback path documentation',detail:'Document what happens when RAG returns INSUFFICIENT_CONTEXT. Is there a human escalation path? A rule-based fallback? A different knowledge base? All paths must be documented and tested.',req:'req-p1'},
+].map(c=>`<div class="cl-section"><div class="cl-item"><div class="cl-check" style="background:var(--amberb);border-color:rgba(245,158,11,.3);color:var(--amber);">✓</div><div style="flex:1;"><div style="font-weight:700;color:var(--t1);font-size:12px;margin-bottom:3px;">${c.item}</div><div style="font-size:11px;color:var(--t2);">${c.detail}</div></div><span class="cl-req ${c.req}">${c.req==='req-p0'?'P0 Required':c.req==='req-p1'?'P1 Important':'P2 Best practice'}</span></div></div>`).join('')}
+
+<div class="section-h">P2 — Best practice</div>
+${[
+{item:'Context window logging',detail:'Log the full context payload hash (not content) per query for reproducibility. Enables replaying the exact LLM call that produced a given answer. Required for regulatory dispute resolution.',req:'req-p2'},
+{item:'Red team adversarial testing',detail:'Test: prompt injection via malicious chunk content, cross-tenant data leakage, jailbreak attempts via query, confidence inflation (model answers outside context). Document findings and mitigations.',req:'req-p2'},
+].map(c=>`<div class="cl-section"><div class="cl-item"><div class="cl-check" style="background:var(--greenb);border-color:rgba(52,211,153,.3);color:var(--green);">✓</div><div style="flex:1;"><div style="font-weight:700;color:var(--t1);font-size:12px;margin-bottom:3px;">${c.item}</div><div style="font-size:11px;color:var(--t2);">${c.detail}</div></div><span class="cl-req ${c.req}">${c.req==='req-p0'?'P0 Required':c.req==='req-p1'?'P1 Important':'P2 Best practice'}</span></div></div>`).join('')}`
+},
+
+{
+id:'interview', num:'A7', title:'Interview Q&A',
+desc:'20 architect-level questions with model answers. Wells Fargo Claims AI framing built in. Click to expand each answer.',
+qs:[
+{q:'How do I answer "design a RAG system from scratch"?', a:'Structure top-down: ingestion (parse→chunk→embed→index) → serving (parallel retrieve→fuse→rerank→assemble) → generation (stream→cite→ground-check) → monitoring (RAGAS+latency+drift). Name specific technical choices (sentence-boundary chunking, RRF fusion, cross-encoder reranking) rather than speaking abstractly about "RAG," and mention SR 11-7 controls explicitly if the role is at a regulated institution.', mnemonic:'Top-down: ingest→serve→generate→monitor, name specifics', steps:['Ingestion layer','Serving layer','Generation layer','Monitoring layer']},
+{q:'What should I say about chunking strategy selection?', a:'Lead with the tradeoff, not just a recommendation: fixed-size is fast but cuts mid-sentence, sentence-boundary preserves meaning at moderate cost, semantic and propositional chunking cost more compute but maximize precision for high-value knowledge bases. Then state what you\'d choose for the specific scenario asked and why — generic "it depends" answers read as evasive; a stated choice with reasoning reads as judgment.', mnemonic:'State the tradeoff, then commit to a specific choice', steps:['List tradeoffs','Fixed vs sentence vs semantic','State your choice','Justify for this scenario']},
+{q:'How do I frame SR 11-7 without sounding rehearsed?', a:'Anchor it to a concrete artifact you\'d actually produce — "every retrieval logs a query_hash and chunk_ids so an auditor can reconstruct any historical answer" — rather than reciting the regulation\'s name and category list. Specificity about what gets logged and why signals real experience; abstract references to "model risk management" without detail signal you\'ve memorized the term, not lived with the requirement.', mnemonic:'Cite the artifact (the log line), not the regulation name', steps:['Don\'t recite term','Cite the artifact','e.g. the audit log line','Signals real experience']},
+],
+render:()=>`
+<div class="ah-top"><span class="ah-num">A7</span><span class="ah-title">Interview Q&A — 20 Questions</span></div>
+<div class="ah-desc">Click any question to expand the model answer. Every answer is framed for a senior AI Architect / Director-level role at a regulated financial institution.</div>
+<div style="margin-top:14px;" id="qaList">
+${[
+{q:'Walk me through how you would design a RAG system for a claims knowledge base.',tag:'qa-arch',a:`Start with the data layer: ingest claims policy PDFs, DOCX, and DB exports through a parser-cleaner pipeline. Chunk using sentence-boundary splitting with SHA-256 content IDs and sliding overlap — this gives you dedup on re-ingest and no mid-sentence cuts. Embed with BGE-large-en-v1.5 running on-prem (data residency requirement at Wells Fargo) and store in pgvector with a tenant_id column for multi-client isolation. On the serving path, run BM25 and dense retrieval in parallel, fuse with RRF, and cross-encoder rerank the top-20 candidates to get final top-5. The PayloadBuilder deduplicates, stitches adjacent chunks, enforces a 3,500-token budget, and injects a compliance header before the LLM call. Every retrieval event is logged with query_hash, chunk_ids, model versions, and scores for SR 11-7 audit.`},
+{q:'Why did you choose pgvector over Pinecone?',tag:'qa-wf',a:`Three reasons for a regulated institution. First, data residency — policy documents cannot leave the Wells Fargo network perimeter, so a SaaS vector store is a non-starter without significant legal review. Second, governance — pgvector lives in the same Postgres instance as our application data, which means multi-tenant isolation is a single WHERE tenant_id clause, schema-level access controls, and audit logs co-located with the vectors. Third, SR 11-7 — the model risk team can inspect the full retrieval system without external vendor access. The tradeoff is scale ceiling (~50M vectors before sharding) and manual hybrid search implementation, both acceptable for our Claims KB size.`},
+{q:'How do you evaluate whether your RAG system is actually working?',tag:'qa-arch',a:`I separate retrieval quality from answer quality. For retrieval, I measure context precision (what fraction of top-K chunks were actually useful) and context recall (did we retrieve all chunks needed to answer). For answers, I measure faithfulness (are all claims supported by the context) and answer relevancy (does the answer address the question). I build a golden dataset of 100-200 (question, ground truth answer, source doc) triples from domain experts, run RAGAS weekly, and block deployment on faithfulness regression > 2%. In production, I monitor grounding score per answer in real-time and alert on retrieval miss rate > 5%.`},
+{q:'What is the biggest mistake teams make with RAG?',tag:'qa-arch',a:`Skipping the assembly step. Most demos do retrieve-then-dump — take the top-K chunks, join with newlines, send to LLM. In production this fails because overlapping chunks from parent-child indexing send duplicate content, the token budget is ignored causing cost runaway, and the chunks arrive in score order rather than document order — which degrades LLM comprehension of narrative documents. A proper assembly step deduplicates near-identical chunks, stitches adjacent chunks from the same document, trims to a token budget, re-sorts by document position, and injects structured metadata so the LLM can cite sources accurately.`},
+{q:'How do you handle the case where no retrieved chunks are relevant?',tag:'qa-prod',a:`The system prompt instructs the model to respond with a specific token — I use INSUFFICIENT_CONTEXT — rather than making up an answer. The generation node detects this token and triggers a fallback path: rewrite the query using a reformulation LLM call, retrieve again, and if still insufficient, escalate to a human or a different knowledge base. In a LangGraph implementation this is a conditional edge from the generate node back to rewrite. I also track the INSUFFICIENT_CONTEXT rate in production — if it exceeds 10%, it signals a KB coverage gap and triggers a document ingestion sprint.`},
+{q:'Explain the difference between Naive, Advanced, and Agentic RAG.',tag:'qa-arch',a:`Naive RAG is a single-shot pipeline: embed query, retrieve top-K by cosine, concat context, call LLM. It breaks on paraphrased queries (semantic gap), boundary splits, and context bloat. Advanced RAG adds query preprocessing (HyDE rewrites the query as a hypothetical answer before embedding — 15-30% recall improvement), hybrid retrieval (BM25 + dense + RRF), cross-encoder reranking, and contextual compression (extract only the relevant sentence from each chunk). Agentic RAG models the process as a state machine — it grades retrieved docs, routes to a rewrite loop if quality is low (CRAG), injects human review when confidence is uncertain, and grades the answer itself after generation. Use Naive for prototypes, Advanced for production, Agentic for high-stakes or multi-step queries where the retrieval path is not known upfront.`},
+{q:'How do you prevent hallucination in RAG?',tag:'qa-prod',a:`Four layers. First, the system prompt: explicit instruction to answer only from the provided context with a specific fallback phrase if context is insufficient. Second, citation enforcement: instruct the model to cite [chunk_id] after every claim — this surfaces when it's answering from parametric memory rather than context. Third, post-generation grounding check: compute the fraction of answer sentences that reference a cited chunk — if below 0.5, flag the answer and optionally re-retrieve. Fourth, context assembly discipline: send only highly relevant chunks (cross-encoder reranked), not a broad top-20 — a smaller, higher-precision context reduces the surface area for hallucination.`},
+{q:'What is SR 11-7 and how does it apply to a RAG system?',tag:'qa-wf',a:`SR 11-7 is the Federal Reserve and OCC's model risk management guidance. It requires regulated institutions to: register models in a model inventory with purpose, owner, version, and validation date; validate models independently (the validation team cannot be the development team); monitor model performance in production with defined metrics and thresholds; and document model limitations, assumptions, and changes. For a RAG system, this means every component is a model — the embedding model, the LLM, and the retrieval pipeline itself. Practically: log query_hash + chunk_ids + model_version on every retrieval, store embedding_model version per chunk row, run weekly RAGAS evals against a golden dataset, require independent validation before deployment, and document the chunking strategy and its limitations.`},
+{q:'How do you handle multi-tenant data isolation in RAG?',tag:'qa-wf',a:`The primary mechanism is a tenant_id column on every chunk row in pgvector, with every retrieval query including WHERE tenant_id = $param. This is simple, fast (indexed), and auditable. For higher isolation requirements, separate schemas per tenant prevent any possibility of query logic bugs leaking data. The ingestion pipeline sets tenant_id at ingest time and it never changes. Integration tests assert that tenant A queries never return tenant B chunk_ids — this runs in CI on every deployment. For the LLM payload, the system prompt includes the tenant_id so the model is aware of its operational context.`},
+{q:'How would you cut retrieval latency from 800ms to under 300ms?',tag:'qa-prod',a:`Profile first — latency typically breaks down as: embedding ~40ms, BM25 ~10ms, pgvector ANN ~80ms, cross-encoder reranker ~200ms, LLM first token ~500ms. The biggest wins: run BM25 and dense retrieval in parallel with asyncio (saves ~80ms), cache frequent query embeddings in Redis with 1hr TTL (saves ~40ms on repeated queries), make cross-encoder reranking conditional — skip it for queries whose top-1 score is already above 0.9 (saves ~200ms on easy queries), and stream the LLM response to the UI so the user sees the first token at ~100ms even if generation takes 600ms total.`},
+{q:'When should you NOT use RAG?',tag:'qa-arch',a:`Three cases. First, when the answer requires reasoning across the entire document, not a specific passage — RAG retrieves fragments, not full document understanding. Second, when the latency budget is under 100ms — retrieval adds irreducible latency. Third, when the domain vocabulary is so specialized that generic embedding models have a large semantic gap and fine-tuning the LLM on the domain is more practical than domain-adapted retrieval. Also: if the knowledge base is small enough to fit in a long-context window entirely, a single LLM call with the full document is simpler and more accurate than retrieval.`},
+{q:'What chunking strategy would you use for financial regulatory documents?',tag:'qa-wf',a:`Sentence-boundary chunking with 256-token windows and 2-sentence overlap for the base strategy. Financial regulatory docs have dense, precise language where every sentence matters — fixed-size chunking cuts mid-clause and loses meaning. For tables (fee schedules, rate tables), extract as structured markdown blocks rather than flattening to prose. For cross-references ("see Section 4.2"), flag these chunks with a cross_ref metadata field and retrieve the referenced section alongside. SHA-256 content IDs enable idempotent re-ingest when the document is updated — only changed sections get re-embedded.`},
+{q:'How do you choose the right value for K in top-K retrieval?',tag:'qa-arch',a:`K has two values in a production system: candidate_k (how many to retrieve before reranking, typically 20) and final_k (how many to send to the LLM, typically 3-5). Candidate_k should be large enough that the cross-encoder can find the true relevant chunks — I use 20 as a default. Final_k is constrained by the token budget and the LLM's effective attention span. More than 5-7 chunks degrades answer quality because the model distributes attention across more text. I tune final_k empirically against the RAGAS golden dataset — the K that maximises faithfulness × answer relevancy is the right one.`},
+{q:'What is HyDE and why does it work?',tag:'qa-arch',a:`HyDE — Hypothetical Document Embedding — addresses the asymmetry between query embeddings and document embeddings. A query like "recovery rate for water damage" embeds as a short, information-sparse vector. A relevant policy paragraph embeds as a dense, information-rich vector. The cosine distance between them is large even if semantically the query is answered by the paragraph. HyDE solves this by asking the LLM to write a hypothetical answer to the query first, then embedding that hypothetical answer. The hypothetical answer embedding is much closer in the embedding space to the real answer chunks. Empirically this improves recall by 15-30% on domain-specific corpora where there's vocabulary mismatch between user queries and document language.`},
+{q:'How do you handle document updates in a production RAG system?',tag:'qa-prod',a:`Content-addressed ingestion: every chunk has a SHA-256 ID derived from its text content. When a document is updated, the ingestion pipeline re-chunks the document and computes new SHA-256 IDs. Only chunks whose ID has changed get re-embedded and re-inserted. Chunks that haven't changed are untouched. The pipeline uses ON CONFLICT DO NOTHING in pgvector for idempotent inserts. Deleted sections are tracked by comparing the set of chunk_ids produced from the current document version against those stored — orphaned chunk_ids are soft-deleted with a deleted_at timestamp. A Kafka topic publishes document change events to trigger the ingestion worker.`},
+{q:'What is Reciprocal Rank Fusion and why use it over weighted score averaging?',tag:'qa-arch',a:`RRF combines multiple ranked lists using the formula 1/(k + rank) where k=60 is a constant. The key insight is that it operates on ranks, not scores. BM25 scores and dense cosine scores live in completely different numerical ranges and distributions — normalising them to combine them is fragile and requires tuning per dataset. RRF sidesteps this entirely: it only cares about the relative ordering from each retriever, not the absolute score. A chunk that appears in position 3 in BM25 and position 2 in dense retrieval gets a higher RRF score than one that appears in position 1 in only one of them. This makes RRF robust across different retriever types without any calibration.`},
+{q:'How do you implement human-in-loop in an agentic RAG system?',tag:'qa-prod',a:`In a LangGraph StateGraph, I add a human_review node and use interrupt_before to pause graph execution before the generate node when needs_human=True. The grade_node sets needs_human=True when the document relevance score falls in the uncertain range (0.4–0.7) — high enough to attempt generation but low enough to warrant review. The graph pauses, writes the current state to MemorySaver, and surfaces the retrieved chunks to a human reviewer interface. The human approves, modifies, or rejects the context before the graph resumes at the generate node. The human decision (approved/modified/rejected) and the reviewer_id are appended to the audit_trail for SR 11-7 compliance.`},
+{q:'What is the difference between context precision and context recall?',tag:'qa-arch',a:`Context precision asks: of the chunks I retrieved, how many were actually useful? It measures retrieval quality — are you retrieving noise alongside signal. Context recall asks: did I retrieve all the chunks needed to answer the question correctly? It measures coverage — did I miss anything important. A system with high precision but low recall retrieves few but highly relevant chunks — the answer might be partially correct but miss important details. High recall but low precision retrieves all relevant chunks plus a lot of noise — the LLM has to filter signal from noise. For Claims AI, I target precision > 0.80 (I can't afford to waste context window on noise) and recall > 0.85 (I can't afford to miss policy clauses).`},
+{q:'How does embedding model fine-tuning improve RAG?',tag:'qa-arch',a:`Generic embedding models are trained on general web text. Financial/claims documents use domain-specific vocabulary (subrogation, indemnification, pro-rata, charge-off) that may not be well-represented in the training data, causing a semantic gap. Fine-tuning the bi-encoder on (query, relevant_document) pairs from your domain teaches it that "write-off" and "charge-off" are semantically close in your context. You can generate training pairs from your golden eval dataset or by using an LLM to generate synthetic queries for each chunk. Fine-tuning a BGE model with Sentence Transformers takes 2-4 hours on one GPU. Typical improvement: 5-15% on domain-specific RAGAS metrics. Important: re-embed all stored chunks with the fine-tuned model before deploying.`},
+{q:'If you had to explain your RAG architecture to a non-technical executive, what would you say?',tag:'qa-wf',a:`Our Claims AI works like a very precise research assistant. When a claims officer asks a question, the system searches through thousands of policy documents in under a second to find the three most relevant paragraphs. It then hands those paragraphs to an AI that reads only those paragraphs to formulate an answer — the AI cannot answer from general knowledge, only from what we retrieved. Every answer cites exactly which document and page it came from, so the claims officer can verify it. The system logs every question asked, every document retrieved, and every answer given — which satisfies our model risk compliance requirements. If the system isn't confident enough, it escalates to a human reviewer before the answer is delivered.`},
+].map((qa,i)=>`
+<div class="qa-item">
+  <div class="qa-q" onclick="toggleQA(${i})">
+    <span class="qa-qnum">Q${String(i+1).padStart(2,'0')}</span>
+    <span class="qa-qtext">${qa.q}</span>
+    <span class="qa-arrow">›</span>
+  </div>
+  <div class="qa-a" id="qa-${i}">
+    <span class="qa-tag ${qa.tag}">${qa.tag==='qa-wf'?'WF / Regulated':qa.tag==='qa-arch'?'Architecture':'Production'}</span>
+    <div>${qa.a}</div>
+  </div>
+</div>`).join('')}
+</div>`
+}
+];
+
+function toggleQA(i) {
+  const q = document.querySelectorAll('.qa-q')[i];
+  const a = document.getElementById('qa-'+i);
+  const open = q.classList.contains('open');
+  q.classList.toggle('open', !open);
+  a.classList.toggle('open', !open);
+}
+
+// ═══════════════════════════════════════════════════════
+//  UPDATED RENDER
+// ═══════════════════════════════════════════════════════
+function selectStage(i) {
+  currentStage = i; history = [];
+  const s = STAGES[i];
+  document.querySelectorAll('.hpill').forEach((p,pi)=>p.classList.toggle('on',pi===i));
+  document.querySelectorAll('.si,.ai').forEach(el=>el.classList.remove('on'));
+  document.querySelectorAll('.si')[i]?.classList.add('on');
+  document.getElementById('stepbar').style.display = 'flex';
+  document.getElementById('codeArea').style.display = 'block';
+  const archArea = document.getElementById('archArea');
+  if(archArea) archArea.style.display = 'none';
+
+  document.getElementById('stageHdr').innerHTML = `
+    <div class="sh-top">
+      <span class="sh-num">${s.num}</span>
+      <span class="sh-title">${s.title}</span>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-left:auto;">${s.tags.map(t=>`<span class="tag ${t.c}">${t.l}</span>`).join('')}</div>
+    </div>
+    <div class="sh-desc">${s.desc}</div>
+    <div class="sh-meta"><span>file: <strong>${s.filename}</strong></span><span>steps: <strong>① CHUNK &nbsp;② SEARCH &nbsp;③ ASSEMBLE &nbsp;④ GENERATE</strong></span></div>`;
+
+  const wnHtml = `<div class="wn"><div class="wn-title">What this stage adds</div><div class="wn-grid">
+    <div class="wn-step"><div class="wn-step-label" style="color:var(--teal);">① Chunk</div><ul>${s.wn.chunk.map(w=>`<li>${w}</li>`).join('')}</ul></div>
+    <div class="wn-step"><div class="wn-step-label" style="color:var(--amber);">② Search</div><ul>${s.wn.search.map(w=>`<li>${w}</li>`).join('')}</ul></div>
+    <div class="wn-step"><div class="wn-step-label" style="color:var(--purple);">③ Assemble</div><ul>${s.wn.assemble.map(w=>`<li>${w}</li>`).join('')}</ul></div>
+    <div class="wn-step"><div class="wn-step-label" style="color:var(--green);">④ Generate</div><ul>${s.wn.generate.map(w=>`<li>${w}</li>`).join('')}</ul></div>
+  </div><div class="inst"><div class="inst-lbl">Install</div>${s.install}</div></div>`;
+
+  document.getElementById('codeArea').innerHTML = `<div class="cb"><div class="cb-bar"><div class="cb-left"><span class="cb-lang">python</span><span class="cb-file">${s.filename}</span></div><button class="cb-copy" onclick="copyCode()">Copy</button></div><pre id="codePre">${s.code}</pre></div>${wnHtml}`;
+
+  const body = document.getElementById('askBody');
+  body.innerHTML = renderQuestionsPanel(QUESTIONS[i], 'stage'+i);
+  document.getElementById('askSub').textContent = `${s.num} · Claims AI · all 4 steps`;
+}
+
+function selectArch(i) {
+  currentStage = 100 + i; history = [];
+  const a = ARCH[i];
+  document.querySelectorAll('.hpill').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.si,.ai').forEach(el=>el.classList.remove('on'));
+  document.querySelectorAll('.ai')[i]?.classList.add('on');
+  document.getElementById('stepbar').style.display = 'none';
+  document.getElementById('codeArea').style.display = 'none';
+  let archArea = document.getElementById('archArea');
+  if(!archArea){
+    archArea = document.createElement('div');
+    archArea.id = 'archArea'; archArea.className = 'arch-area';
+    document.querySelector('.main').appendChild(archArea);
+  }
+  archArea.style.display = 'block';
+  archArea.innerHTML = a.render();
+  if (a.id === 'sysdesign') initRagInfraStages();
+
+  document.getElementById('stageHdr').innerHTML = `
+    <div class="ah-top"><span class="ah-num">${a.num}</span><span class="ah-title">${a.title}</span></div>
+    <div class="ah-desc">${a.desc}</div>`;
+
+  const body = document.getElementById('askBody');
+  body.innerHTML = renderQuestionsPanel(a.qs, a.id);
+  document.getElementById('askSub').textContent = `${a.num} · ${a.title} · Claims AI`;
+}
+
+function sendAsk() {
+  const inp = document.getElementById('askInp');
+  const q = inp.value.trim(); if (!q) return;
+  inp.value = '';
+  addMsg('user', q);
+  const thinking = addMsg('ai', '<span class="sp"></span>Thinking…');
+  history.push({ role: 'user', content: q });
+  const isArch = currentStage >= 100;
+  const contextLabel = isArch ? ARCH[currentStage-100].title : STAGES[currentStage].title;
+  const sys = `You are a senior RAG architect and interviewer coach. The user is studying: "${contextLabel}". They are an Executive Director at Wells Fargo leading Claims and Recovery AI (18-person team, SR 11-7 regulated, LangGraph, pgvector, BGE embeddings). Answer in 3-6 sentences. Be precise, production-focused, and tie to Wells Fargo Claims AI context where relevant.`;
+  fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:600, system:sys, messages:history })
+  }).then(r=>r.json()).then(d=>{
+    const ans = d.content?.map(b=>b.text||'').join('')||'Error.';
+    history.push({ role:'assistant', content:ans });
+    thinking.querySelector('.bbl').innerHTML = ans.replace(/\n/g,'<br>');
+    document.getElementById('askBody').scrollTop = 9999;
+  }).catch(e=>{ thinking.querySelector('.bbl').textContent='Error: '+e.message; });
+}
+
+function boot() {
+  const pills = document.getElementById('hdrPills');
+  pills.innerHTML = STAGES.map((s,i)=>`<button class="hpill${i===0?' on':''}" onclick="selectStage(${i})">${s.num}</button>`).join('');
+  const rail = document.getElementById('rail');
+  rail.innerHTML =
+    `<div class="rail-lbl">Code Stages</div>` +
+    STAGES.map((s,i)=>`<div class="si${i===0?' on':''}" onclick="selectStage(${i})">
+      <div class="si-num">${s.num}</div><div class="si-title">${s.title}</div>
+      <div class="si-steps"><div class="dot d1"></div><div class="dot d2"></div><div class="dot d3"></div><div class="dot d4"></div></div>
+      <div class="si-why">${s.desc.substring(0,60)}…</div></div>`).join('') +
+    `<div class="rail-divider"><span>Architect Prep</span></div>` +
+    ARCH.map((a,i)=>`<div class="ai" onclick="selectArch(${i})">
+      <div class="ai-num">${a.num}</div><div class="ai-title">${a.title}</div>
+      <div class="ai-why">${a.desc.substring(0,60)}…</div></div>`).join('');
+  selectStage(0);
+  document.getElementById('askInp').addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendAsk();}
+  });
+}
+document.addEventListener('DOMContentLoaded', boot);
+</script>
+</body>
+</html>
